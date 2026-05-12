@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEMA 빙고 관리자</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+  font-family:Pretendard,sans-serif;
+}
+
+body{
+  margin:0;
+  background:#f4f6fb;
+  color:#222;
+}
+
+header{
+  background:#c62828;
+  color:white;
+  padding:16px;
+  text-align:center;
+  font-size:24px;
+  font-weight:bold;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:16px;
+}
+
+.dashboard{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.card{
+  background:white;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  margin-bottom:16px;
+}
+
+.stat{
+  font-size:32px;
+  font-weight:bold;
+  margin-top:10px;
+}
+
+.words{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+}
+
+.word-btn{
+  width:100%;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  line-height:1.2;
+  word-break:keep-all;
+  background:#e9eef7;
+  border:2px solid #c7d4e8;
+  border-radius:10px;
+  padding:8px;
+  font-size:11px;
+  cursor:pointer;
+}
+
+.word-btn.called{
+  background:#d32f2f;
+  color:white;
+}
+
+.winner{
+  padding:10px 0;
+  border-bottom:1px solid #eee;
+  font-weight:bold;
+}
+
+.reset-btn{
+  width:100%;
+  padding:16px;
+  border:none;
+  border-radius:12px;
+  background:#111;
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+👑 SEMA 빙고 관리자
+</header>
+
+<div class="container">
+
+  <div class="dashboard">
+
+    <div class="card">
+      <div>👥 참가자 수</div>
+      <div class="stat" id="participantCount">0</div>
+    </div>
+
+    <div class="card">
+      <div>💾 저장된 빙고판</div>
+      <div class="stat" id="boardCount">0</div>
+    </div>
+
+    <div class="card">
+      <div>🏆 우승자 수</div>
+      <div class="stat" id="winnerCount">0</div>
+    </div>
+
+    <div class="card">
+      <div>📢 호출 단어 수</div>
+      <div class="stat" id="calledCount">0</div>
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <button id="resetBtn" class="reset-btn">
+      🔥 전체 초기화
+    </button>
+
+  </div>
+
+  <div class="card">
+
+    <h3>단어 호출</h3>
+
+    <div class="words" id="adminWords"></div>
+
+  </div>
+
+  <div class="card">
+
+    <h3>🏆 우승자 현황</h3>
+
+    <div id="winnerList"></div>
+
+  </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  onSnapshot,
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAiwMpzyovfkh46P658mAF9As4oPpOXAhQ",
+  authDomain: "sema-bingo.firebaseapp.com",
+  projectId: "sema-bingo",
+  storageBucket: "sema-bingo.firebasestorage.app",
+  messagingSenderId: "836857439540",
+  appId: "1:836857439540:web:c48adfcf50a54f00093161",
+  measurementId: "G-Z5MLT1EYFK"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const words = [
+"과학기술인연금","적립형공제","목돈급여","과학기술인으뜸적금","복지서비스",
+"든든한파트너","가치공유","약속","자산관리","책임성",
+"과학기술투자","복지사각해소","회원복지강화","리스크관리","신뢰성효율성",
+"과학기술인공제회","대덕복지센터","세마인베스트먼트","사이언스빌리지","세마파트너스",
+"15만명","18조8천억원","8,442억원","5.10%","회원만족",
+"한국과학기술정보연구원","한국전자통신연구원","국방과학연구소","한국수력원자력","과학기술정보통신부",
+"주식","채권","부동산","인프라","기업",
+"폴바셋","샐러디","후토루","부타이","능라도"
+];
+
+const adminWords = document.getElementById("adminWords");
+
+words.forEach(word=>{
+
+  const btn = document.createElement("button");
+
+  btn.className = "word-btn";
+
+  btn.innerText = word;
+
+  btn.onclick = async ()=>{
+
+    const ref = doc(db,"game","calledWords");
+
+    const snap = await getDoc(ref);
+
+    let arr = [];
+
+    if(snap.exists()){
+
+      arr = snap.data().words || [];
+
+    }
+
+    if(arr.includes(word)){
+
+      arr = arr.filter(v=>v!==word);
+
+    } else {
+
+      arr.push(word);
+
+    }
+
+    await setDoc(ref,{
+      words:arr
+    });
+
+  };
+
+  adminWords.appendChild(btn);
+
+});
+
+onSnapshot(doc(db,"game","calledWords"),snap=>{
+
+  if(!snap.exists()) return;
+
+  const arr = snap.data().words || [];
+
+  document.getElementById("calledCount").innerText = arr.length;
+
+  document.querySelectorAll(".word-btn").forEach(btn=>{
+
+    if(arr.includes(btn.innerText)){
+
+      btn.classList.add("called");
+
+    } else {
+
+      btn.classList.remove("called");
+
+    }
+
+  });
+
+});
+
+onSnapshot(collection(db,"participants"),snap=>{
+
+  document.getElementById("participantCount").innerText = snap.size;
+
+});
+
+onSnapshot(collection(db,"boards"),snap=>{
+
+  document.getElementById("boardCount").innerText = snap.size;
+
+});
+
+onSnapshot(collection(db,"winners"),snap=>{
+
+  document.getElementById("winnerCount").innerText = snap.size;
+
+});
+
+const q = query(
+  collection(db,"winners"),
+  orderBy("createdAt")
+);
+
+onSnapshot(q,snap=>{
+
+  const box = document.getElementById("winnerList");
+
+  box.innerHTML = "";
+
+  let rank = 1;
+
+  snap.forEach(doc=>{
+
+    const div = document.createElement("div");
+
+    div.className = "winner";
+
+    div.innerText = `${rank}등 - ${doc.data().username}`;
+
+    box.appendChild(div);
+
+    rank++;
+
+  });
+
+});
+
+document
+  .getElementById("resetBtn")
+  .onclick = async ()=>{
+
+  const ok = confirm(
+    "모든 데이터를 초기화할까요?"
+  );
+
+  if(!ok) return;
+
+  const participants =
+    await getDocs(collection(db,"participants"));
+
+  for(const item of participants.docs){
+
+    await deleteDoc(item.ref);
+
+  }
+
+  const boards =
+    await getDocs(collection(db,"boards"));
+
+  for(const item of boards.docs){
+
+    await deleteDoc(item.ref);
+
+  }
+
+  const winners =
+    await getDocs(collection(db,"winners"));
+
+  for(const item of winners.docs){
+
+    await deleteDoc(item.ref);
+
+  }
+
+  try{
+
+    await deleteDoc(
+      doc(db,"game","calledWords")
+    );
+
+  } catch(e){}
+
+  alert("초기화 완료");
+
+};
+
+</script>
+
+</body>
+</html>
