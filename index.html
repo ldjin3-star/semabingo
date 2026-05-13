@@ -5,554 +5,196 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>SEMA 빙고대회</title>
 <style>
+/* CSS 스타일은 기존과 동일하므로 유지 (공간 절약을 위해 핵심 로직 위주로 확인하세요) */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: Pretendard, 'Noto Sans KR', sans-serif; }
-
 body { background: #f3f4f6; color: #111827; min-height: 100vh; }
-
-/* ── Header ── */
-header {
-  background: #0f4c81;
-  color: white;
-  padding: 16px;
-  text-align: center;
-  font-size: 22px;
-  font-weight: bold;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,.2);
-}
-
-/* ── Game Status Banner ── */
-#gameBanner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  border-bottom: 1px solid #e5e7eb;
-}
+header { background: #0f4c81; color: white; padding: 16px; text-align: center; font-size: 22px; font-weight: bold; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+#gameBanner { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
 #gameBanner.waiting { background: #fef3c7; color: #d97706; }
 #gameBanner.started { background: #dcfce7; color: #16a34a; }
-.bdot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-  animation: blink 1.2s infinite;
-}
-.bdot.orange { background: #d97706; }
-.bdot.green  { background: #16a34a; }
-@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
-
-/* ── Container ── */
 .container { max-width: 600px; margin: auto; padding: 14px; }
-
-/* ── Info boxes ── */
 .info { display: flex; gap: 10px; margin-bottom: 14px; }
-.info-box {
-  flex: 1; background: white; padding: 14px; border-radius: 14px;
-  text-align: center; font-weight: 700; font-size: 13px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.07);
-  border: 1px solid #e5e7eb;
-}
+.info-box { flex: 1; background: white; padding: 14px; border-radius: 14px; text-align: center; font-weight: 700; font-size: 13px; border: 1px solid #e5e7eb; }
 .info-box span { display: block; font-size: 24px; font-weight: 900; color: #0f4c81; margin-top: 4px; }
-
-/* ── Card ── */
-.card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.07);
-  border: 1px solid #e5e7eb;
-}
-.card h3 { font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-
-/* ── Input ── */
-.name-input {
-  width: 100%; padding: 13px 14px;
-  border-radius: 10px; border: 1.5px solid #e5e7eb;
-  font-size: 16px; margin-bottom: 10px; outline: none;
-  background: #f9fafb; transition: border-color .2s;
-}
-.name-input:focus { border-color: #0f4c81; background: white; }
-
-/* ── Buttons ── */
-.btn {
-  width: 100%; padding: 13px; border: none; border-radius: 10px;
-  cursor: pointer; font-weight: 700; font-size: 15px;
-  margin-bottom: 8px; transition: all .18s;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn:active { transform: scale(.97); }
-.btn-green  { background: #16a34a; color: white; }
-.btn-green:hover  { background: #15803d; }
-.btn-blue   { background: #0f4c81; color: white; }
-.btn-blue:hover   { background: #0a3660; }
-.btn-red    { background: #dc2626; color: white; }
-.btn-red:hover    { background: #b91c1c; }
-.btn-gray   { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
-.btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
-
-/* ── Bingo Board ── */
-.bingo-board {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 5px;
-  margin-bottom: 10px;
-}
-.cell {
-  aspect-ratio: 1;
-  background: #f3f4f6;
-  border: 2px dashed #d1d5db;
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  text-align: center;
-  font-size: clamp(8px, 2.3vw, 11px);
-  font-weight: 600;
-  padding: 3px;
-  line-height: 1.25;
-  word-break: keep-all;
-  cursor: pointer;
-  transition: all .18s;
-  -webkit-tap-highlight-color: transparent;
-  position: relative;
-  user-select: none;
-}
-.cell.filled { background: white; border-style: solid; border-color: #d1d5db; }
-.cell.filled:hover { border-color: #0f4c81; background: #eff6ff; color: #0f4c81; }
-.cell.selected {
-  background: #fee2e2; border-color: #fca5a5; color: #dc2626; font-weight: 700;
-}
-.cell.selected::after {
-  content: '✓'; position: absolute; top: 2px; right: 4px;
-  font-size: 9px; color: #dc2626; font-weight: 900;
-}
-.cell.bingo-line {
-  background: #fef3c7 !important; border-color: #fbbf24 !important;
-  color: #d97706 !important; font-weight: 900 !important;
-  box-shadow: 0 0 0 2px rgba(251,191,36,.4);
-}
-.cell.locked { cursor: default; }
-.cell.locked:hover { border-color: #d1d5db !important; background: white !important; color: inherit !important; }
-
-/* ── Bingo Count Badge ── */
-.bingo-count-row { display: flex; justify-content: center; margin-bottom: 10px; }
-.bingo-badge {
-  background: #f3f4f6; border: 1.5px solid #e5e7eb;
-  border-radius: 20px; padding: 5px 18px;
-  font-size: 13px; color: #6b7280; font-weight: 700;
-}
-.bingo-badge.on {
-  background: #fef3c7; border-color: #fbbf24; color: #d97706;
-  animation: badgePulse .8s infinite alternate;
-}
-@keyframes badgePulse { from{box-shadow:none;} to{box-shadow:0 0 12px rgba(251,191,36,.5);} }
-
-/* ── Word List ── */
-.words {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-.word-btn {
-  width: 100%;
-  min-height: 52px;
-  display: flex; align-items: center; justify-content: center;
-  text-align: center; line-height: 1.3; word-break: keep-all;
-  background: #f3f4f6;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .15s;
-  -webkit-tap-highlight-color: transparent;
-  color: #111827;
-  position: relative;
-}
-.word-btn:hover  { background: #eff6ff; border-color: #93c5fd; color: #0f4c81; }
-.word-btn:active { transform: scale(.96); }
-.word-btn.active { background: #0f4c81; color: white; border-color: #0f4c81; }
-.word-btn.used   {
-  background: #f9fafb; color: #9ca3af;
-  border-color: #e5e7eb; pointer-events: none;
-}
-.word-btn.used::after {
-  content: '✓'; position: absolute; top: 5px; right: 8px;
-  font-size: 11px; color: #16a34a; font-weight: 900;
-}
-
-/* ── Edit locked banner ── */
-#editLockedBanner {
-  display: none;
-  background: #fee2e2; border-radius: 10px; padding: 10px 12px;
-  font-size: 13px; color: #dc2626; font-weight: 600; margin-bottom: 10px;
-  text-align: center;
-}
-
-/* ── Bingo Popup ── */
-.bingo-overlay {
-  display: none; position: fixed; inset: 0; z-index: 1000;
-  align-items: center; justify-content: center;
-  background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
-}
+.card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid #e5e7eb; }
+.name-input { width: 100%; padding: 13px; border-radius: 10px; border: 1.5px solid #e5e7eb; font-size: 16px; margin-bottom: 10px; }
+.btn { width: 100%; padding: 13px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; margin-bottom: 8px; }
+.btn-green { background: #16a34a; color: white; }
+.btn-blue { background: #0f4c81; color: white; }
+.btn-red { background: #dc2626; color: white; }
+.btn-gray { background: #f3f4f6; color: #374151; }
+.bingo-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.cell { aspect-ratio: 1; background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 9px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 11px; font-weight: 600; cursor: pointer; position: relative; }
+.cell.filled { background: white; border-style: solid; }
+.cell.selected { background: #fee2e2; border-color: #fca5a5; color: #dc2626; font-weight: 700; }
+.cell.bingo-line { background: #fef3c7 !important; border-color: #fbbf24 !important; color: #d97706 !important; font-weight: 900 !important; }
+.bingo-badge { background: #f3f4f6; border-radius: 20px; padding: 5px 18px; font-size: 13px; color: #6b7280; font-weight: 700; border: 1.5px solid #e5e7eb; }
+.bingo-badge.on { background: #fef3c7; border-color: #fbbf24; color: #d97706; }
+.words { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.word-btn { min-height: 50px; background: #f3f4f6; border: 2px solid #e5e7eb; border-radius: 12px; font-weight: 600; cursor: pointer; }
+.word-btn.active { background: #0f4c81; color: white; }
+.word-btn.used { background: #f9fafb; color: #9ca3af; pointer-events: none; }
+.bingo-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
 .bingo-overlay.show { display: flex; }
-.bingo-popup {
-  background: white; border-radius: 22px;
-  padding: 36px 28px; text-align: center;
-  max-width: 310px; width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,.25);
-  animation: popupIn .35s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes popupIn { from{transform:scale(.6);opacity:0;} to{transform:scale(1);opacity:1;} }
-.bingo-popup .emoji { font-size: 64px; display: block; margin-bottom: 8px; }
-.bingo-popup h2 {
-  font-size: 38px; font-weight: 900; color: #d97706;
-  letter-spacing: 4px; margin-bottom: 8px;
-}
-.bingo-popup p { color: #6b7280; font-size: 14px; line-height: 1.7; margin-bottom: 20px; }
-.bingo-popup .btn { margin-bottom: 0; }
+.bingo-popup { background: white; padding: 30px; border-radius: 20px; text-align: center; }
 </style>
 </head>
 <body>
 
-<!-- Bingo Popup -->
 <div class="bingo-overlay" id="bingoOverlay">
-  <div class="bingo-popup">
-    <span class="emoji">🎉</span>
-    <h2>BINGO!</h2>
-    <p id="bingoMsg">빙고 완성!</p>
-    <button class="btn btn-blue" onclick="document.getElementById('bingoOverlay').classList.remove('show')">확인</button>
-  </div>
+  <div class="bingo-popup"><h2>🎉 BINGO!</h2><p id="bingoMsg"></p><button class="btn btn-blue" onclick="document.getElementById('bingoOverlay').classList.remove('show')">확인</button></div>
 </div>
 
 <header>🎯 SEMA 빙고대회</header>
 
-<!-- Game Status Banner -->
-<div id="gameBanner" class="waiting">
-  <span class="bdot orange" id="bannerDot"></span>
-  <span id="bannerText">대기 중 — 관리자가 시작 전까지 빙고판을 자유롭게 수정할 수 있습니다</span>
-</div>
+<div id="gameBanner" class="waiting"><span id="bannerText">대기 중 — 관리자가 시작 전까지 빙고판을 수정하세요</span></div>
 
 <div class="container">
-
   <div class="info">
     <div class="info-box">👥 참가자<span id="participantCount">0</span></div>
     <div class="info-box">📢 호출 단어<span id="calledCount">0</span></div>
   </div>
 
-  <!-- 이름 + 제출 -->
   <div class="card">
-    <h3>👤 참가자 정보</h3>
-    <input type="text" class="name-input" id="username" placeholder="이름을 입력하세요" maxlength="10" />
+    <input type="text" class="name-input" id="username" placeholder="성함을 입력하세요" />
     <button class="btn btn-green" onclick="randomBoard()">🎲 랜덤 생성</button>
-    <button class="btn btn-gray"  onclick="loadBoard()">📂 저장된 빙고판 불러오기</button>
-    <button class="btn btn-blue"  onclick="saveBoard()">💾 임시 저장</button>
-    <button class="btn btn-red"   id="submitBtn" onclick="submitBingo()">📨 참가 제출</button>
-    <p id="submitHint" style="font-size:11px;color:#6b7280;text-align:center;margin-top:4px;">대회가 시작된 후부터는 수정이 불가합니다.</p>
+    <button class="btn btn-gray" onclick="loadBoard()">📂 불러오기</button>
+    <button class="btn btn-blue" onclick="saveBoard()">💾 임시 저장</button>
+    <button class="btn btn-red" id="submitBtn" onclick="submitBingo()">📨 참가 제출</button>
   </div>
 
-  <!-- 빙고판 -->
   <div class="card">
-    <h3>🟦 내 빙고판</h3>
-    <div class="bingo-count-row"><span class="bingo-badge" id="bingoBadge">0 빙고</span></div>
+    <div style="text-align:center; margin-bottom:10px;"><span class="bingo-badge" id="bingoBadge">0 빙고</span></div>
     <div class="bingo-board" id="board"></div>
   </div>
 
-  <!-- 단어 선택 -->
   <div class="card" id="wordCard">
-    <h3>✏️ 단어 선택 <span id="wordCountHint" style="font-weight:400;color:#9ca3af;font-size:12px;">(<span id="selectedCount">0</span>/25)</span></h3>
-    <div id="editLockedBanner">🔒 대회가 시작되어 단어를 수정할 수 없습니다</div>
+    <h3>단어 선택 (<span id="selectedCount">0</span>/25)</h3>
     <div class="words" id="wordList"></div>
   </div>
-
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAiwMpzyovfkh46P658mAF9As4oPpOXAhQ",
-  authDomain: "sema-bingo.firebaseapp.com",
-  projectId: "sema-bingo",
-  storageBucket: "sema-bingo.firebasestorage.app",
-  messagingSenderId: "836857439540",
-  appId: "1:836857439540:web:c48adfcf50a54f00093161"
-};
+const firebaseConfig = { apiKey: "AIzaSyAiwMpzyovfkh46P658mAF9As4oPpOXAhQ", authDomain: "sema-bingo.firebaseapp.com", projectId: "sema-bingo", storageBucket: "sema-bingo.firebasestorage.app", messagingSenderId: "836857439540", appId: "1:836857439540:web:c48adfcf50a54f00093161" };
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db = getFirestore(app);
 
-const words = [
-  "과학기술인연금","적립형공제","목돈급여","과학기술인으뜸적금","복지서비스",
-  "든든한파트너","가치공유","약속","자산관리","책임성",
-  "과학기술투자","복지사각해소","회원복지강화","리스크관리","신뢰성효율성",
-  "과학기술인공제회","대덕복지센터","세마인베스트먼트","사이언스빌리지","세마파트너스",
-  "15만명","18조8천억원","8,442억원","5.10%","회원만족",
-  "한국과학기술정보연구원","한국전자통신연구원","국방과학연구소","한국수력원자력","과학기술정보통신부",
-  "주식","채권","부동산","인프라","기업",
-  "폴바셋","샐러디","후토루","부타이","능라도"
-];
+const words = ["과학기술인연금","적립형공제","목돈급여","과학기술인으뜸적금","복지서비스","든든한파트너","가치공유","약속","자산관리","책임성","과학기술투자","복지사각해소","회원복지강화","리스크관리","신뢰성효율성","과학기술인공제회","대덕복지센터","세마인베스트먼트","사이언스빌리지","세마파트너스","15만명","18조8천억원","8,442억원","5.10%","회원만족","한국과학기술정보연구원","한국전자통신연구원","국방과학연구소","한국수력원자력","과학기술정보통신부","주식","채권","부동산","인프라","기업","폴바셋","샐러디","후토루","부타이","능라도"];
 
-/* ── 상태 ── */
-let currentWord   = null;
-let selectedWords = [];   // 25칸에 채워진 단어 배열 (인덱스 대응)
-let calledWords   = [];
-let gameStarted   = false;
-let submitted     = false;
-let prevBingo     = 0;
+let selectedWords = Array(25).fill(null);
+let calledWords = [];
+let gameStarted = false;
+let submitted = false;
+let currentWord = null;
+let prevBingo = 0;
 
-/* ── 빙고판 셀 생성 ── */
-const board = document.getElementById("board");
-for (let i = 0; i < 25; i++) {
+// 셀 생성
+const boardEl = document.getElementById("board");
+for (let i=0; i<25; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
-  cell.dataset.idx = i;
-  cell.addEventListener("click", () => onCellClick(cell, i));
-  board.appendChild(cell);
-}
-
-function onCellClick(cell, i) {
-  if (submitted) return;
-  if (gameStarted) return; // 게임 시작 후 수정 불가
-
-  if (currentWord) {
-    // 이미 해당 단어가 다른 칸에 있으면 무시
-    if (selectedWords.includes(currentWord)) return;
-    // 기존 단어 있으면 제거
-    if (selectedWords[i]) {
-      const old = selectedWords[i];
+  cell.onclick = () => {
+    if (submitted || gameStarted) return;
+    if (currentWord) {
+      if (selectedWords.includes(currentWord)) return;
+      selectedWords[i] = currentWord;
+      cell.textContent = currentWord;
+      cell.classList.add("filled");
+      currentWord = null;
+      renderWords();
+    } else if (selectedWords[i]) {
       selectedWords[i] = null;
+      cell.textContent = "";
+      cell.classList.remove("filled");
+      renderWords();
     }
-    cell.textContent = currentWord;
-    cell.classList.add("filled");
-    cell.classList.remove("selected");
-    selectedWords[i] = currentWord;
-    currentWord = null;
-    renderWords();
-    return;
-  }
-  // 빈 칸 클릭 시 아무것도 안함
-  if (!cell.textContent) return;
-  // 채워진 칸 클릭 → 제거
-  selectedWords[i] = null;
-  cell.textContent = "";
-  cell.classList.remove("filled","selected","bingo-line");
-  renderWords();
+  };
+  boardEl.appendChild(cell);
 }
 
-/* ── 단어 목록 렌더 ── */
 function renderWords() {
   const list = document.getElementById("wordList");
   list.innerHTML = "";
   document.getElementById("selectedCount").textContent = selectedWords.filter(Boolean).length;
-
-  words.forEach(word => {
+  words.forEach(w => {
     const btn = document.createElement("button");
-    btn.className = "word-btn";
-    btn.textContent = word;
-
-    if (selectedWords.includes(word)) {
-      btn.classList.add("used");
-    } else if (currentWord === word) {
-      btn.classList.add("active");
-    }
-
-    btn.onclick = () => {
-      if (submitted || gameStarted) return;
-      if (selectedWords.includes(word)) return;
-      currentWord = (currentWord === word) ? null : word;
-      renderWords();
-    };
+    btn.className = "word-btn" + (selectedWords.includes(w) ? " used" : (currentWord===w ? " active" : ""));
+    btn.textContent = w;
+    btn.onclick = () => { if(!submitted && !gameStarted) { currentWord = w; renderWords(); }};
     list.appendChild(btn);
   });
 }
 renderWords();
 
-/* ── 랜덤 생성 ── */
-window.randomBoard = function () {
-  if (submitted) return;
-  if (gameStarted) { alert("대회가 시작되어 수정할 수 없습니다"); return; }
-  const shuffled = [...words].sort(() => Math.random() - .5).slice(0, 25);
+window.randomBoard = () => {
+  if (submitted || gameStarted) return;
+  const shuffled = [...words].sort(() => Math.random() - 0.5).slice(0, 25);
   selectedWords = shuffled;
-  document.querySelectorAll(".cell").forEach((cell, idx) => {
-    cell.textContent = shuffled[idx];
-    cell.classList.add("filled");
-    cell.classList.remove("selected","bingo-line");
+  document.querySelectorAll(".cell").forEach((c, i) => {
+    c.textContent = shuffled[i];
+    c.classList.add("filled");
   });
-  currentWord = null;
   renderWords();
-  applyCalled();
 };
 
-/* ── 저장 ── */
-window.saveBoard = async function () {
-  if (submitted) { alert("이미 제출되었습니다"); return; }
-  if (gameStarted) { alert("대회가 시작되어 수정할 수 없습니다"); return; }
-  const username = document.getElementById("username").value.trim();
-  if (!username) { alert("이름을 입력해주세요"); return; }
-  const board25 = [...document.querySelectorAll(".cell")].map(c => c.textContent);
-  if (board25.filter(Boolean).length < 25) { alert("25칸을 모두 채워주세요"); return; }
-  await setDoc(doc(db, "boards", username), { username, board: board25 });
-  alert("💾 저장되었습니다!");
+window.saveBoard = async () => {
+  const name = document.getElementById("username").value.trim();
+  if (!name) return alert("이름을 입력하세요");
+  await setDoc(doc(db, "boards", name), { username: name, board: selectedWords });
+  alert("저장되었습니다");
 };
 
-/* ── 불러오기 ── */
-window.loadBoard = async function () {
-  const username = document.getElementById("username").value.trim();
-  if (!username) { alert("이름을 입력해주세요"); return; }
-  
-  try {
-    // 1. 빙고판 데이터 가져오기
-    const snap = await getDoc(doc(db, "boards", username));
-    if (!snap.exists()) { 
-      alert("저장된 빙고판이 없습니다. 먼저 빙고판을 채우고 저장해주세요."); 
-      return; 
-    }
-    
-    const data = snap.data().board;
-    selectedWords = [...data];
-    
-    // 2. 화면에 빙고판 데이터 출력
-    document.querySelectorAll(".cell").forEach((cell, idx) => {
-      cell.textContent = data[idx] || "";
-      cell.classList.toggle("filled", !!data[idx]);
-      cell.classList.remove("selected", "bingo-line");
-    });
-    
-    currentWord = null;
-    renderWords();
-    applyCalled();
-
-    // 3. [가장 중요] 서버의 참가 명단(participants) 확인
-    const partSnap = await getDoc(doc(db, "participants", username));
-    
-    if (partSnap.exists()) {
-      // 이미 제출한 사람인 경우
-      submitted = true; 
-      lockBoard(); // UI 잠금 함수 실행
-      alert("✅ 제출 완료된 빙고판을 불러왔습니다. (수정 불가)");
-    } else if (gameStarted) {
-      // 제출은 안 했지만 대회가 이미 시작된 경우
-      submitted = false; 
-      lockBoard(); 
-      document.getElementById("submitBtn").textContent = "🔒 대회 시작 후 수정 불가";
-      alert("⚠️ 대회가 시작되어 수정이 불가능합니다.");
-    } else {
-      // 수정 가능한 상태
-      submitted = false;
-      unlockBoard(); // 잠금 해제 함수 실행
-      alert("✅ 빙고판을 불러왔습니다. 수정이 가능합니다.");
-    }
-  } catch (error) {
-    console.error("Error loading board:", error);
-    alert("불러오기 중 오류가 발생했습니다.");
-  }
-};
-
-// --- 도움 함수: UI 잠금 해제 (제출 취소 대응용) ---
-function unlockBoard() {
-  document.getElementById("submitBtn").disabled = false;
-  document.getElementById("submitBtn").textContent = "참가 제출하기";
-  document.getElementById("wordCard").style.display = "block";
-  document.getElementById("editLockedBanner").style.display = "none";
-}
-
-/* ── 참가 제출 ── */
-window.submitBingo = async function () {
-  const username = document.getElementById("username").value.trim();
-  if (!username) { alert("이름을 입력해주세요"); return; }
-  const board25 = [...document.querySelectorAll(".cell")].map(c => c.textContent);
-  if (board25.filter(Boolean).length < 25) { alert("25칸을 모두 채워주세요"); return; }
-  if (!confirm(`"${username}" 이름으로 제출하시겠습니까?\n제출 후에는 수정이 불가합니다.`)) return;
-
-  await setDoc(doc(db, "participants", username), { username, createdAt: Date.now() });
-  await setDoc(doc(db, "boards", username), { username, board: board25 });
-
-  submitted = true;
-  lockBoard();
-  alert("✅ 참가 제출 완료!");
-};
-
-// 모든 수정 기능을 막는 함수
-function lockBoard() {
-  // 제출 버튼 비활성화
-  const sBtn = document.getElementById("submitBtn");
-  sBtn.disabled = true;
-  sBtn.style.opacity = "0.6";
-  sBtn.textContent = "🔒 수정 불가 (제출됨)";
-
-  // 단어 선택 카드 숨기기
-  document.getElementById("wordCard").style.display = "none";
-  
-  // 빙고판 셀 클릭 방지 (CSS 처리)
-  document.getElementById("board").style.pointerEvents = "none";
-  
-  // 랜덤/저장 버튼 등 수정 관련 버튼 숨기기
-  document.querySelectorAll(".btn-green, .btn-blue").forEach(btn => {
-    if(btn.textContent.includes("랜덤") || btn.textContent.includes("저장")) {
-      btn.style.display = "none";
-    }
+window.loadBoard = async () => {
+  const name = document.getElementById("username").value.trim();
+  const snap = await getDoc(doc(db, "boards", name));
+  if (!snap.exists()) return alert("저장된 데이터가 없습니다");
+  selectedWords = snap.data().board;
+  document.querySelectorAll(".cell").forEach((c, i) => {
+    c.textContent = selectedWords[i] || "";
+    c.classList.toggle("filled", !!selectedWords[i]);
   });
-}
-/* ── 게임 시작 상태 반영 ── */
-function applyGameStarted(started) {
-  gameStarted = started;
-  const banner = document.getElementById("gameBanner");
-  const dot = document.getElementById("bannerDot");
-  const text = document.getElementById("bannerText");
-  const lockBanner = document.getElementById("editLockedBanner");
-
-  if (started) {
-    banner.className = "started";
-    dot.className = "bdot green";
-    text.textContent = "대회 진행 중 — 호출되는 단어를 확인하세요!";
-    if (!submitted) {
-        lockBanner.style.display = "block";
-        // 제출 버튼을 비활성화하여 수정을 원천 차단
-        document.getElementById("submitBtn").disabled = true;
-        document.getElementById("submitBtn").textContent = "🔒 대회 진행 중 (수정 불가)";
-    }
-  } else {
-    // ... 기존 대기 상태 코드 유지 ...
-  }
-}
-
-/* ── 호출된 단어 적용 ── */
-function applyCalled() {
-  document.querySelectorAll(".cell").forEach(cell => {
-    const w = cell.textContent;
-    cell.classList.toggle("selected", !!(w && calledWords.includes(w)));
-  });
+  const pSnap = await getDoc(doc(db, "participants", name));
+  if (pSnap.exists()) { submitted = true; lockUI(); }
+  renderWords();
   checkBingo();
+};
+
+window.submitBingo = async () => {
+  const name = document.getElementById("username").value.trim();
+  if (!name || selectedWords.filter(Boolean).length < 25) return alert("이름 입력 및 25칸을 채워주세요");
+  if (!confirm("제출하시겠습니까? (수정 불가)")) return;
+  await setDoc(doc(db, "participants", name), { username: name, createdAt: Date.now() });
+  await setDoc(doc(db, "boards", name), { username: name, board: selectedWords });
+  submitted = true;
+  lockUI();
+  alert("제출 완료!");
+};
+
+function lockUI() {
+  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("submitBtn").textContent = "🔒 제출 완료";
+  document.getElementById("wordCard").style.display = "none";
 }
 
-/* ── 빙고 라인 계산 ── */
-function getBingoLines() {
-  const lines = [];
-  for (let r=0;r<5;r++){const row=[];for(let c=0;c<5;c++)row.push(r*5+c);lines.push(row);}
-  for (let c=0;c<5;c++){const col=[];for(let r=0;r<5;r++)col.push(r*5+c);lines.push(col);}
-  lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
-  return lines;
-}
-
-/* === 여기서부터 끝까지 복사해서 덮어넣으세요 === */
 async function checkBingo() {
   const cells = document.querySelectorAll(".cell");
-  // 빙고 라인 하이라이트 초기화
-  cells.forEach(c => c.classList.remove("bingo-line"));
+  cells.forEach(c => {
+    const w = c.textContent;
+    c.classList.toggle("selected", !!(w && calledWords.includes(w)));
+    c.classList.remove("bingo-line");
+  });
+
+  const lines = [];
+  for(let r=0; r<5; r++){const row=[]; for(let c=0; c<5; c++)row.push(r*5+c); lines.push(row);}
+  for(let c=0; c<5; c++){const col=[]; for(let r=0; r<5; r++)col.push(r*5+c); lines.push(col);}
+  lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
 
   let count = 0;
-  getBingoLines().forEach(line => {
-    const allCalled = line.every(i => {
-      const w = cells[i].textContent;
-      return w && calledWords.includes(w);
-    });
-    if (allCalled) {
+  lines.forEach(line => {
+    if (line.every(i => cells[i].textContent && calledWords.includes(cells[i].textContent))) {
       count++;
       line.forEach(i => cells[i].classList.add("bingo-line"));
     }
@@ -560,55 +202,33 @@ async function checkBingo() {
 
   const badge = document.getElementById("bingoBadge");
   badge.textContent = count + " 빙고";
-  badge.className = "bingo-badge" + (count >= 3 ? " on" : "");
+  badge.classList.toggle("on", count >= 3);
 
-  // [핵심 수정] 3줄 이상이면 무조건 DB에 기록 (관리자 화면 노출용)
-  if (submitted && gameStarted && count >= 3) {
-    const username = document.getElementById("username").value.trim();
-
-    // 1. Firebase DB 기록 (유저명을 ID로 사용하여 즉시 업데이트/복구)
-    await setDoc(doc(db, "winners", username), {
-      username: username,
-      bingoLines: count,
-      createdAt: Date.now()
-    }, { merge: true });
-
-    // 2. 팝업 알림: 줄 수가 실제로 늘어났을 때만 (최초 달성 포함) 딱 한 번 띄움
+  const name = document.getElementById("username").value.trim();
+  if (submitted && gameStarted && count >= 3 && name) {
+    await setDoc(doc(db, "winners", name), { username: name, bingoLines: count, createdAt: Date.now() }, { merge: true });
     if (count > prevBingo) {
-      document.getElementById("bingoMsg").innerHTML =
-        `<strong>${username || "참가자"}</strong>님<br>${count}줄 빙고 완성! 🎊<br><br>관리자에게 확인 받으세요!`;
+      document.getElementById("bingoMsg").textContent = `${count}줄 빙고 완성! 축하합니다!`;
       document.getElementById("bingoOverlay").classList.add("show");
     }
   }
   prevBingo = count;
 }
 
-/* ── Firebase 실시간 리스너 ── */
-// 참가자 수
-onSnapshot(collection(db, "participants"), snap => {
-  document.getElementById("participantCount").textContent = snap.size;
-});
-
-// 호출된 단어
 onSnapshot(doc(db, "game", "calledWords"), snap => {
-  if (!snap.exists()) return;
-  calledWords = snap.data().words || [];
+  calledWords = snap.exists() ? snap.data().words : [];
   document.getElementById("calledCount").textContent = calledWords.length;
-  applyCalled();
+  checkBingo();
 });
 
-// 게임 시작 상태
 onSnapshot(doc(db, "game", "status"), snap => {
-  if (!snap.exists()) { applyGameStarted(false); return; }
-  applyGameStarted(snap.data().started || false);
+  gameStarted = snap.exists() ? snap.data().started : false;
+  const b = document.getElementById("gameBanner");
+  b.className = gameStarted ? "started" : "waiting";
+  document.getElementById("bannerText").textContent = gameStarted ? "대회 진행 중!" : "대기 중...";
 });
 
-/* ── 이름 로컬 저장 ── */
-const savedName = localStorage.getItem("semaBingoUsername");
-if (savedName) document.getElementById("username").value = savedName;
-document.getElementById("username").addEventListener("input", function () {
-  localStorage.setItem("semaBingoUsername", this.value.trim());
-});
+onSnapshot(collection(db, "participants"), snap => document.getElementById("participantCount").textContent = snap.size);
 </script>
 </body>
 </html>

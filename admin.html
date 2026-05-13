@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SEMA 빙고 관리자 (통합본)</title>
+<title>SEMA 빙고 관리자 (최종본)</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: Pretendard, 'Noto Sans KR', sans-serif; }
 body { background: #f3f4f6; color: #111827; min-height: 100vh; }
@@ -50,7 +50,6 @@ header { background: #c62828; color: white; padding: 16px; text-align: center; f
 
   <div class="start-section" id="startSection">
     <h3 id="startTitle">⏳ 대회 시작 전</h3>
-    <p id="startDesc">준비가 완료되면 아래 버튼을 눌러 대회를 시작하세요.</p>
     <button class="btn btn-start" id="startBtn">🚀 대회 시작하기</button>
   </div>
 
@@ -59,13 +58,12 @@ header { background: #c62828; color: white; padding: 16px; text-align: center; f
     <div id="callDisabled" style="background:#fef3c7; padding:10px; border-radius:10px; color:#d97706; font-size:13px; font-weight:600; margin-bottom:12px;">⚠️ 대회를 시작한 후에 단어를 호출할 수 있습니다</div>
     <div id="wordGrid" class="words" style="pointer-events:none; opacity:.45;"></div>
     <div id="calledListWrap" style="margin-top:10px; display:none;">
-      <div style="font-size:12px; color:#6b7280; margin-bottom:6px;">호출된 단어</div>
       <div class="called-list" id="calledList"></div>
     </div>
   </div>
 
   <div class="card">
-    <h3>🏆 빙고 달성 현황</h3>
+    <h3>🏆 빙고 달성 현황 (실시간)</h3>
     <div id="winnerList"><div class="empty-state">아직 달성자가 없습니다</div></div>
   </div>
 
@@ -75,8 +73,7 @@ header { background: #c62828; color: white; padding: 16px; text-align: center; f
   </div>
 
   <div class="card" style="border-color:#fca5a5;">
-    <h3 style="color:#dc2626;">⚠️ 대회 관리</h3>
-    <button class="btn btn-reset" id="resetAllBtn">🗑️ 전체 초기화</button>
+    <button class="btn btn-reset" id="resetAllBtn">🗑️ 전체 데이터 초기화</button>
   </div>
 </div>
 
@@ -94,8 +91,9 @@ let calledWords = [];
 let gameStarted = false;
 let boardsData = {};
 let participantsList = [];
+let winnersData = [];
 
-/* ── UI 초기화 및 이벤트 바인딩 ── */
+// 단어 버튼 생성
 const wordGrid = document.getElementById("wordGrid");
 words.forEach(word => {
   const btn = document.createElement("button");
@@ -118,18 +116,16 @@ document.getElementById("startBtn").onclick = async () => {
 };
 
 document.getElementById("resetAllBtn").onclick = async () => {
-  if (!confirm("모든 데이터를 초기화하시겠습니까?")) return;
-  const cols = ["participants", "boards", "winners"];
-  for (const c of cols) {
+  if (!confirm("모든 데이터를 초기화하시겠습니까? (복구 불가)")) return;
+  for (const c of ["participants", "boards", "winners"]) {
     const ds = await getDocs(collection(db, c));
     for (const d of ds.docs) await deleteDoc(d.ref);
   }
   await deleteDoc(doc(db, "game", "calledWords"));
   await deleteDoc(doc(db, "game", "status"));
-  alert("초기화 완료");
+  location.reload();
 };
 
-/* ── 공통 처리 함수 ── */
 function applyGameStatus(started) {
   gameStarted = started;
   const ss = document.getElementById("startSection");
@@ -137,22 +133,16 @@ function applyGameStatus(started) {
   const cd = document.getElementById("callDisabled");
   const clw = document.getElementById("calledListWrap");
   const btn = document.getElementById("startBtn");
-
   if (started) {
     ss.className = "start-section done";
     document.getElementById("startTitle").textContent = "✅ 대회 진행 중";
     btn.className = "btn btn-started"; btn.textContent = "✅ 대회 진행 중"; btn.onclick = null;
     cd.style.display = "none"; wg.style.pointerEvents = "auto"; wg.style.opacity = "1"; clw.style.display = "block";
-  } else {
-    ss.className = "start-section";
-    document.getElementById("startTitle").textContent = "⏳ 대회 시작 전";
-    btn.className = "btn btn-start"; btn.textContent = "🚀 대회 시작하기"; 
-    cd.style.display = "block"; wg.style.pointerEvents = "none"; wg.style.opacity = ".45"; clw.style.display = "none";
   }
 }
 
 function countBingo(board) {
-  if (!board || board.length < 25) return 0;
+  if (!board) return 0;
   const lines = [];
   for(let r=0; r<5; r++){ const row=[]; for(let c=0; c<5; c++) row.push(r*5+c); lines.push(row); }
   for(let c=0; c<5; c++){ const col=[]; for(let r=0; r<5; r++) col.push(r*5+c); lines.push(col); }
@@ -163,65 +153,65 @@ function countBingo(board) {
 window.resetSubmission = async function(username) {
   if (!confirm(`"${username}"님의 제출을 취소하시겠습니까?`)) return;
   await deleteDoc(doc(db, "participants", username));
-  try { await deleteDoc(doc(db, "winners", username)); } catch(e){}
+  await deleteDoc(doc(db, "winners", username)).catch(()=>{});
 };
 
-/* ── 실시간 데이터 감시 (핵심) ── */
+// 화면 업데이트 통합 함수
+function refreshUI() {
+  // 1. 우승자 명단 업데이트
+  const wl = document.getElementById("winnerList");
+  let wHtml = '';
+  let vCount = 0;
+  winnersData.forEach((data, index) => {
+    if (participantsList.includes(data.username)) {
+      vCount++;
+      const rank = vCount;
+      const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-n';
+      const time = data.createdAt ? new Date(data.createdAt).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
+      wHtml += `<div class="winner-item"><div class="winner-rank ${rankClass}">${rank}</div><div style="flex:1; font-weight:700;">${data.username}</div><div style="color:#d97706; font-size:13px; font-weight:700;">🎉 ${data.bingoLines}줄</div><div style="font-size:11px; color:#9ca3af; margin-left:8px;">${time}</div></div>`;
+    }
+  });
+  wl.innerHTML = wHtml || '<div class="empty-state">아직 달성자가 없습니다</div>';
+  document.getElementById("winnerCount").textContent = vCount;
+
+  // 2. 참가자 현황 업데이트
+  const pl = document.getElementById("participantList");
+  const activeEntries = Object.entries(boardsData).filter(([name]) => participantsList.includes(name));
+  document.getElementById("boardCount").textContent = activeEntries.length;
+  pl.innerHTML = activeEntries.length ? activeEntries.map(([name, board]) => {
+    const bl = countBingo(board);
+    return `<div class="participant-item"><div><span style="font-weight:600;">${bl >= 3 ? '👑 ' : ''}${name}</span> <span style="color:#d97706; font-size:12px;">${bl}줄</span></div><button class="btn-reset-sub" onclick="resetSubmission('${name}')">제출 취소</button></div>`;
+  }).join('') : '<div class="empty-state">참가자가 없습니다</div>';
+}
+
+// 리스너 설정
 onSnapshot(doc(db, "game", "calledWords"), snap => {
   calledWords = snap.exists() ? (snap.data().words || []) : [];
   document.getElementById("calledCount").textContent = calledWords.length;
-  document.querySelectorAll(".word-btn").forEach(btn => btn.classList.toggle("called", calledWords.includes(btn.textContent)));
   const cl = document.getElementById("calledList");
-  cl.innerHTML = calledWords.length ? calledWords.map(w => `<span class="called-chip">${w}</span>`).join('') : '<span style="font-size:12px;color:#9ca3af;">아직 없습니다</span>';
-  updateDisplay();
+  cl.innerHTML = calledWords.map(w => `<span class="called-chip">${w}</span>`).join('');
+  document.querySelectorAll(".word-btn").forEach(btn => btn.classList.toggle("called", calledWords.includes(btn.textContent)));
+  refreshUI();
 });
 
 onSnapshot(doc(db, "game", "status"), snap => applyGameStatus(snap.exists() ? (snap.data().started || false) : false));
 
 onSnapshot(collection(db, "participants"), snap => {
-  participantsList = snap.docs.map(doc => doc.id);
+  participantsList = snap.docs.map(d => d.id);
   document.getElementById("participantCount").textContent = snap.size;
-  updateDisplay();
+  refreshUI();
 });
 
 onSnapshot(collection(db, "boards"), snap => {
   boardsData = {};
-  snap.forEach(doc => { boardsData[doc.id] = doc.data().board; });
-  updateDisplay();
+  snap.forEach(d => { boardsData[d.id] = d.data().board; });
+  refreshUI();
 });
 
-// 우승자 리스너
 onSnapshot(query(collection(db, "winners"), orderBy("createdAt", "asc")), snap => {
-  const wl = document.getElementById("winnerList");
-  const winnerCountEl = document.getElementById("winnerCount");
-  let html = '';
-  let validCount = 0;
-  let rank = 1;
-
-  snap.forEach(d => {
-    const data = d.data();
-    if (participantsList.includes(data.username)) {
-      validCount++;
-      const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-n';
-      const time = data.createdAt ? new Date(data.createdAt).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
-      html += `<div class="winner-item"><div class="winner-rank ${rankClass}">${rank}</div><div style="flex:1; font-weight:700;">${data.username}</div><div style="color:#d97706; font-size:13px; font-weight:700;">🎉 ${data.bingoLines}줄</div><div style="font-size:11px; color:#9ca3af; margin-left:8px;">${time}</div></div>`;
-      rank++;
-    }
-  });
-  wl.innerHTML = html || '<div class="empty-state">아직 달성자가 없습니다</div>';
-  winnerCountEl.textContent = validCount;
+  winnersData = snap.docs.map(d => d.data());
+  refreshUI();
 });
-
-function updateDisplay() {
-  const pl = document.getElementById("participantList");
-  const activeEntries = Object.entries(boardsData).filter(([name]) => participantsList.includes(name));
-  document.getElementById("boardCount").textContent = activeEntries.length;
-  if (activeEntries.length === 0) { pl.innerHTML = '<div class="empty-state">참가자가 없습니다</div>'; return; }
-  pl.innerHTML = activeEntries.map(([name, board]) => {
-    const bl = countBingo(board);
-    return `<div class="participant-item"><div><span style="font-weight:600;">${bl >= 3 ? '👑 ' : ''}${name}</span> <span style="color:#d97706; font-size:12px;">${bl}줄</span></div><button class="btn-reset-sub" onclick="resetSubmission('${name}')">제출 취소</button></div>`;
-  }).join('');
-}
 </script>
 </body>
 </html>
