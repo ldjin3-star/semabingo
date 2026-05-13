@@ -130,7 +130,66 @@ window.loadBoard = async () => {
 window.submitBingo = async () => {
   const name = document.getElementById("username").value.trim();
   if(!name || selected.filter(Boolean).length < 25) return alert("이름 입력 및 25칸을 채워주세요");
-  await setDoc(doc(db, "participants", name), { username: name });
+  await setDoc(doc(db, "participants<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SEMA 빙고대회</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Pretendard, 'Noto Sans KR', sans-serif; }
+body { background: #f3f4f6; color: #111827; min-height: 100vh; }
+
+header { background: #0f4c81; color: white; padding: 16px; text-align: center; font-size: 22px; font-weight: bold; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+
+#gameBanner { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #e5e7eb; }
+#gameBanner.waiting { background: #fef3c7; color: #d97706; }
+#gameBanner.started { background: #dcfce7; color: #16a34a; }
+.bdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; animation: blink 1.2s infinite; }
+.bdot.orange { background: #d97706; }
+.bdot.green  { background: #16a34a; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+.container { max-width: 600px; margin: auto; padding: 14px; }
+.info { display: flex; gap: 10px; margin-bottom: 14px; }
+.info-box { flex: 1; background: white; padding: 14px; border-radius: 14px; text-align: center; font-weight: 700; font-size: 13px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border: 1px solid #e5e7eb; }
+.info-box span { display: block; font-size: 24px; font-weight: 900; color: #0f4c81; margin-top: 4px; }
+
+.card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border: 1px solid #e5e7eb; }
+.card h3 { font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+
+.name-input { width: 100%; padding: 13px 14px; border-radius: 10px; border: 1.5px solid #e5e7eb; font-size: 16px; margin-bottom: 10px; outline: none; background: #f9fafb; transition: border-color .2s; }
+.btn { width: 100%; padding: 13px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 15px; margin-bottom: 8px; transition: all .18s; -webkit-tap-highlight-color: transparent; }
+.btn-green  { background: #16a34a; color: white; }
+.btn-blue   { background: #0f4c81; color: white; }
+.btn-red    { background: #dc2626; color: white; }
+.btn-gray   { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.bingo-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px; }
+.cell { aspect-ratio: 1; background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 9px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: clamp(8px, 2.3vw, 11px); font-weight: 600; padding: 3px; line-height: 1.25; word-break: keep-all; cursor: pointer; transition: all .18s; position: relative; user-select: none; }
+.cell.filled { background: white; border-style: solid; border-color: #d1d5db; }
+.cell.selected { background: #fee2e2; border-color: #fca5a5; color: #dc2626; font-weight: 700; }
+.cell.bingo-line { background: #fef3c7 !important; border-color: #fbbf24 !important; color: #d97706 !important; font-weight: 900 !important; box-shadow: 0 0 0 2px rgba(251,191,36,.4); }
+
+.bingo-badge { background: #f3f4f6; border: 1.5px solid #e5e7eb; border-radius: 20px; padding: 5px 18px; font-size: 13px; color: #6b7280; font-weight: 700; }
+.bingo-badge.on { background: #fef3c7; border-color: #fbbf24; color: #d97706; animation: badgePulse .8s infinite alternate; }
+@keyframes badgePulse { from{box-shadow:none;} to{box-shadow:0 0 12px rgba(251,191,36,.5);} }
+
+.words { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.word-btn { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: center; text-align: center; background: #f3f4f6; border: 2px solid #e5e7eb; border-radius: 12px; padding: 10px 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .15s; color: #111827; }
+.word-btn.active { background: #0f4c81; color: white; border-color: #0f4c81; }
+.word-btn.used { background: #f9fafb; color: #9ca3af; pointer-events: none; }
+
+.bingo-overlay { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); }
+.bingo-overlay.show { display: flex; }
+.bingo-popup { background: white; border-radius: 22px; padding: 36px 28px; text-align: center; max-width: 310px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: popupIn .35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes popupIn { from{transform:scale(.6);opacity:0;} to{transform:scale(1);opacity:1;} }
+</style>
+</head>
+<body>
+
+<div class="bingo", name), { username: name });
   await setDoc(doc(db, "boards", name), { username: name, board: selected });
   submitted = true;
   location.reload();
