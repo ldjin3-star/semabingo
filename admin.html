@@ -385,8 +385,12 @@ onSnapshot(query(collection(db, "winners"), orderBy("createdAt")), snap => {
   }
   let rank = 1;
   wl.innerHTML = '';
-  snap.forEach(d => {
-    const data = d.data();
+snap.forEach(d => {
+
+  const data = d.data();
+
+  // 현재 참가자 목록에 없는 사람은 제외
+  if (!participantsList.includes(data.username)) return;
     const rankClass = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
     const time = data.createdAt
       ? new Date(data.createdAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
