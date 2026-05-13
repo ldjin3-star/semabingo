@@ -301,19 +301,31 @@ function countBingo(board) {
 }
 
 /* ── 참가자 목록 갱신 ── */
-function renderParticipants() {
+function updateAdminDisplay() {
   const pl = document.getElementById("participantList");
-  const entries = Object.entries(boardsData);
-  if (!entries.length) {
-    pl.innerHTML = '<div class="empty-state"><span class="ei">👤</span>참가자가 없습니다</div>';
+  
+  // 핵심: 제출자 명단(participantsList)에 포함된 사람만 필터링
+  const activeEntries = Object.entries(boardsData).filter(([name]) => 
+    participantsList.includes(name)
+  );
+
+  if (activeEntries.length === 0) {
+    pl.innerHTML = '<div class="empty-state">👤 제출된 빙고판이 없습니다</div>';
     return;
   }
-  pl.innerHTML = entries.map(([name, board]) => {
+
+  pl.innerHTML = activeEntries.map(([name, board]) => {
     const bl = countBingo(board);
+    const isWinner = bl >= 3; // 3줄 이상 강조
     return `
-      <div class="participant-item">
-        <span class="participant-name">${name}</span>
-        <span class="participant-bingo">${bl > 0 ? bl + '줄 🎉' : '-'}</span>
+      <div class="participant-item" style="${isWinner ? 'background: #fffbeb; border-left: 4px solid #fbbf24;' : ''}">
+        <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <span class="participant-name">${isWinner ? '👑 ' : ''}${name}</span>
+            <span class="participant-bingo">${bl > 0 ? bl + '줄' : '-'}</span>
+          </div>
+          <button class="btn-reset-sub" onclick="resetSubmission('${name}')">제출 취소</button>
+        </div>
       </div>`;
   }).join('');
 }
@@ -347,12 +359,20 @@ onSnapshot(collection(db, "participants"), snap => {
   document.getElementById("participantCount").textContent = snap.size;
 });
 
-// 빙고판 수
-onSnapshot(collection(db, "boards"), snap => {
-  document.getElementById("boardCount").textContent = snap.size;
+let participantsList = []; // 제출자 명단 저장 변수 추가
+
+// 1. 제출자 명단(participants) 감시 (추가)
+onSnapshot(collection(db, "participants"), (snap) => {
+  participantsList = snap.docs.map(doc => doc.id); 
+  document.getElementById("participantCount").textContent = snap.size;
+  updateAdminDisplay(); 
+});
+
+// 2. 빙고판 데이터 감시 (기존 코드 수정)
+onSnapshot(collection(db, "boards"), (snap) => {
   boardsData = {};
-  snap.forEach(d => { boardsData[d.id] = d.data().board || []; });
-  renderParticipants();
+  snap.forEach(doc => { boardsData[doc.id] = doc.data().board; });
+  updateAdminDisplay(); 
 });
 
 // 우승자 현황
