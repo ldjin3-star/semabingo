@@ -182,24 +182,54 @@ onSnapshot(collection(db, "boards"), snap => {
   updateAdminDisplay();
 });
 
+
+
+// --- 여기서부터 복사해서 기존 winners 리스너를 통째로 교체하세요 ---
 onSnapshot(query(collection(db, "winners"), orderBy("createdAt", "asc")), snap => {
   const wl = document.getElementById("winnerList");
+  const winnerCountEl = document.getElementById("winnerCount");
+  
   wl.innerHTML = '';
   let validCount = 0;
   let rank = 1;
+
+  if (snap.empty) {
+    wl.innerHTML = '<div class="empty-state">아직 달성자가 없습니다</div>';
+    winnerCountEl.textContent = "0";
+    return;
+  }
+
   snap.forEach(d => {
     const data = d.data();
+    // 현재 참가자 명단(participantsList)에 실제로 있는 유저만 필터링
     if (participantsList.includes(data.username)) {
       validCount++;
-      const rankClass = rank<=3 ? `rank-${rank}` : 'rank-n';
-      const time = data.createdAt ? new Date(data.createdAt).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
-      wl.innerHTML += `<div class="winner-item"><div class="winner-rank ${rankClass}">${rank}</div><div style="flex:1; font-weight:700;">${data.username}</div><div style="color:#d97706; font-size:13px; font-weight:700;">🎉 ${data.bingoLines}줄</div><div style="font-size:11px; color:#9ca3af; margin-left:8px;">${time}</div></div>`;
+      const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-n';
+      const time = data.createdAt 
+        ? new Date(data.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) 
+        : '';
+
+      wl.innerHTML += `
+        <div class="winner-item">
+          <div class="winner-rank ${rankClass}">${rank}</div>
+          <div style="flex:1; font-weight:700;">${data.username}</div>
+          <div style="color:#d97706; font-size:13px; font-weight:700;">🎉 ${data.bingoLines}줄</div>
+          <div style="font-size:11px; color:#9ca3af; margin-left:8px;">${time}</div>
+        </div>`;
       rank++;
     }
   });
-  document.getElementById("winnerCount").textContent = validCount;
-  if (validCount === 0) wl.innerHTML = '<div class="empty-state">아직 달성자가 없습니다</div>';
+
+  // 최종 카운트를 화면에 반영
+  winnerCountEl.textContent = validCount;
+
+  // 필터링 결과 아무도 없다면 안내 문구 표시
+  if (validCount === 0) {
+    wl.innerHTML = '<div class="empty-state">아직 달성자가 없습니다</div>';
+  }
 });
+// --- 여기까지 복사하세요 (resetSubmission 함수 바로 윗줄까지) ---
+
 
 window.resetSubmission = async function(username) {
   if (!confirm(`"${username}"님의 제출을 취소하시겠습니까?`)) return;
