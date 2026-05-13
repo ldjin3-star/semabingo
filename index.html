@@ -568,17 +568,19 @@ async function checkBingo() {
       `<strong>${username || "참가자"}</strong>님<br>${count}줄 빙고 완성! 🎊<br><br>관리자에게 확인 받으세요!`;
     document.getElementById("bingoOverlay").classList.add("show");
 
-// 이미 우승 기록이 있는지 확인
-const winnerRef = doc(db, "winners", username);
-const winnerSnap = await getDoc(winnerRef);
+// 최초 1회 기록 여부 확인
+const winnerCheckRef = doc(db, "winners", username);
+const winnerCheckSnap = await getDoc(winnerCheckRef);
 
-// 최초 1회만 기록
-if (!winnerSnap.exists()) {
-  await setDoc(winnerRef, {
-    username,
-    bingoLines: count,
-    createdAt: Date.now()
-  });
+if (!winnerCheckSnap.exists()) {
+
+  // 최초 기록 저장
+await setDoc(doc(collection(db, "winners")), {
+  username,
+  bingoLines: count,
+  createdAt: Date.now()
+});
+
 }
   }
   prevBingo = count;
