@@ -375,12 +375,12 @@ onSnapshot(collection(db, "boards"), (snap) => {
   updateAdminDisplay(); 
 });
 
-// 우승자 현황 (정확한 필터링 및 카운트 반영 버전)
+/* ── 우승자 현황 리스너 (정확한 필터링 버전) ── */
 onSnapshot(query(collection(db, "winners"), orderBy("createdAt", "asc")), snap => {
   const wl = document.getElementById("winnerList");
   const winnerCountEl = document.getElementById("winnerCount");
   
-  wl.innerHTML = ''; // 리스트 초기화
+  wl.innerHTML = ''; 
   let validWinnerCount = 0;
   let rank = 1;
 
@@ -392,8 +392,6 @@ onSnapshot(query(collection(db, "winners"), orderBy("createdAt", "asc")), snap =
 
   snap.forEach(d => {
     const data = d.data();
-    
-    // 핵심: 현재 참가자 명단(participantsList)에 유저명이 있는 경우만 리스트에 추가
     if (participantsList.includes(data.username)) {
       validWinnerCount++;
       const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
@@ -412,16 +410,7 @@ onSnapshot(query(collection(db, "winners"), orderBy("createdAt", "asc")), snap =
     }
   });
 
-  // 필터링된 실제 인원수를 상단 대시보드에 반영
   winnerCountEl.textContent = validWinnerCount;
-
-  // 만약 DB에 데이터는 있지만 참가자 필터링 후 아무도 남지 않았다면 안내 문구 출력
-  if (validWinnerCount === 0) {
-    wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
-  }
-});
-
-  winnerCountEl.textContent = validWinnerCount; // 필터링된 실제 우승자 수 업데이트
   if (validWinnerCount === 0) {
     wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
   }
