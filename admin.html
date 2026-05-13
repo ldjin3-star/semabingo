@@ -375,26 +375,32 @@ onSnapshot(collection(db, "boards"), (snap) => {
   updateAdminDisplay(); 
 });
 
-// 우승자 현황
+// 우승자 현황 (필터링 및 중복 방지 강화)
 onSnapshot(query(collection(db, "winners"), orderBy("createdAt")), snap => {
-  document.getElementById("winnerCount").textContent = snap.size;
   const wl = document.getElementById("winnerList");
-  if (!snap.size) {
+  const winnerCountEl = document.getElementById("winnerCount");
+  
+  wl.innerHTML = ''; // 반복문 시작 전 리스트 초기화
+  let validWinnerCount = 0;
+  let rank = 1;
+
+  if (snap.empty) {
     wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
+    winnerCountEl.textContent = "0";
     return;
   }
-  let rank = 1;
-  wl.innerHTML = '';
-snap.forEach(d => {
 
-  const data = d.data();
+  snap.forEach(d => {
+    const data = d.data();
+    // 현재 실제 참가자 명단(participantsList)에 있는 사람만 화면에 출력
+    if (!participantsList.includes(data.username)) return;
 
-  // 현재 참가자 목록에 없는 사람은 제외
-  if (!participantsList.includes(data.username)) return;
-    const rankClass = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
+    validWinnerCount++;
+    const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
     const time = data.createdAt
-      ? new Date(data.createdAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
+      ? new Date(data.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       : '';
+
     wl.innerHTML += `
       <div class="winner-item">
         <div class="winner-rank ${rankClass}">${rank}</div>
@@ -404,6 +410,11 @@ snap.forEach(d => {
       </div>`;
     rank++;
   });
+
+  winnerCountEl.textContent = validWinnerCount; // 필터링된 실제 우승자 수 업데이트
+  if (validWinnerCount === 0) {
+    wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
+  }
 });
 
 /* ── 전체 초기화 ── */
