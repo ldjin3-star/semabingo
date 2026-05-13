@@ -490,7 +490,7 @@ function lockBoard() {
   document.getElementById("wordCard").style.display = "none";
   
   // 빙고판 셀 클릭 방지 (CSS 처리)
-  document.getElementById("bingoBoard").style.pointerEvents = "none";
+  document.getElementById("board").style.pointerEvents = "none";
   
   // 랜덤/저장 버튼 등 수정 관련 버튼 숨기기
   document.querySelectorAll(".btn-green, .btn-blue").forEach(btn => {
@@ -540,7 +540,7 @@ function getBingoLines() {
   return lines;
 }
 
-function checkBingo() {
+async function checkBingo() {
   const cells = document.querySelectorAll(".cell");
   // 빙고 라인 하이라이트 초기화
   cells.forEach(c => c.classList.remove("bingo-line"));
@@ -568,12 +568,18 @@ function checkBingo() {
       `<strong>${username || "참가자"}</strong>님<br>${count}줄 빙고 완성! 🎊<br><br>관리자에게 확인 받으세요!`;
     document.getElementById("bingoOverlay").classList.add("show");
 
-    // 빙고 달성자 Firebase에 기록
-    setDoc(doc(db, "winners", username), {
-      username,
-      bingoLines: count,
-      createdAt: Date.now()
-    });
+// 이미 우승 기록이 있는지 확인
+const winnerRef = doc(db, "winners", username);
+const winnerSnap = await getDoc(winnerRef);
+
+// 최초 1회만 기록
+if (!winnerSnap.exists()) {
+  await setDoc(winnerRef, {
+    username,
+    bingoLines: count,
+    createdAt: Date.now()
+  });
+}
   }
   prevBingo = count;
 }
