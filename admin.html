@@ -129,6 +129,26 @@ header {
 .participant-name { font-weight: 600; }
 .participant-bingo { font-size: 12px; font-weight: 700; color: #d97706; }
 
+/* ── 빙고 달성 현황 (참가자 현황 기반) ── */
+.bingo-achieve-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px; margin-bottom: 8px;
+  background: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  animation: slideIn .3s ease;
+}
+.bingo-achieve-rank {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 900; flex-shrink: 0;
+}
+.bingo-achieve-name { flex: 1; font-weight: 700; font-size: 15px; color: #111827; }
+.bingo-achieve-lines {
+  font-size: 14px; font-weight: 900; color: #d97706;
+  background: #fff; border: 1.5px solid #fbbf24; border-radius: 20px;
+  padding: 3px 12px;
+}
+
 .empty-state { text-align: center; padding: 24px; color: #9ca3af; font-size: 14px; }
 .empty-state .ei { font-size: 32px; display: block; margin-bottom: 8px; }
 
@@ -172,9 +192,9 @@ header {
     </div>
   </div>
 
-  <!-- 빙고 달성 현황 -->
+  <!-- 빙고 달성 현황 (winners 컬렉션 + 참가자 현황 3줄 이상 통합) -->
   <div class="card">
-    <h3>🏆 빙고 달성 현황</h3>
+    <h3>🏆 빙고 달성 현황 <span style="font-size:11px;font-weight:400;color:#9ca3af;letter-spacing:0;">(3줄 이상 달성자)</span></h3>
     <div id="winnerList"><div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div></div>
   </div>
 
@@ -182,7 +202,7 @@ header {
   <div class="card">
     <h3 style="display:flex;justify-content:space-between;align-items:center;">
       <span>👥 참가자 현황</span>
-      <button class="btn btn-outline" onclick="" style="width:auto;padding:5px 12px;font-size:12px;margin:0;">🔄 새로고침</button>
+      <button class="btn btn-outline" onclick="refreshParticipants()" style="width:auto;padding:5px 12px;font-size:12px;margin:0;">🔄 새로고침</button>
     </h3>
     <div id="participantList"><div class="empty-state"><span class="ei">👤</span>참가자가 없습니다</div></div>
   </div>
@@ -287,7 +307,7 @@ function applyGameStatus(started) {
   }
 }
 
-/* ── 빙고 계산 ── */
+/* ── 빙고 라인 계산 ── */
 function getBingoLines() {
   const lines = [];
   for(let r=0;r<5;r++){const row=[];for(let c=0;c<5;c++)row.push(r*5+c);lines.push(row);}
@@ -300,7 +320,37 @@ function countBingo(board) {
   return getBingoLines().filter(line => line.every(i => board[i] && calledWords.includes(board[i]))).length;
 }
 
-/* ── 참가자 목록 갱신 ── */
+/* ── 빙고 달성 현황 렌더 (참가자 기반 3줄 이상) ── */
+function renderBingoAchievers() {
+  const wl = document.getElementById("winnerList");
+
+  // boardsData에서 3줄 이상인 참가자 계산
+  const achievers = Object.entries(boardsData)
+    .map(([name, board]) => ({ name, lines: countBingo(board) }))
+    .filter(p => p.lines >= 3)
+    .sort((a, b) => b.lines - a.lines); // 줄 수 내림차순 정렬
+
+  document.getElementById("winnerCount").textContent = achievers.length;
+
+  if (!achievers.length) {
+    wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 3줄 이상 달성자가 없습니다</div>';
+    return;
+  }
+
+  wl.innerHTML = '';
+  achievers.forEach((p, idx) => {
+    const rank = idx + 1;
+    const rankClass = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
+    wl.innerHTML += `
+      <div class="bingo-achieve-item">
+        <div class="bingo-achieve-rank ${rankClass}">${rank}</div>
+        <div class="bingo-achieve-name">${p.name}</div>
+        <div class="bingo-achieve-lines">🎉 ${p.lines}줄 빙고</div>
+      </div>`;
+  });
+}
+
+/* ── 참가자 목록 렌더 ── */
 function renderParticipants() {
   const pl = document.getElementById("participantList");
   const entries = Object.entries(boardsData);
@@ -310,13 +360,24 @@ function renderParticipants() {
   }
   pl.innerHTML = entries.map(([name, board]) => {
     const bl = countBingo(board);
+    const bingoTag = bl >= 3
+      ? `<span class="participant-bingo" style="color:#16a34a;">🏆 ${bl}줄 빙고!</span>`
+      : bl > 0
+        ? `<span class="participant-bingo">${bl}줄 🎉</span>`
+        : `<span class="participant-bingo" style="color:#9ca3af;">-</span>`;
     return `
       <div class="participant-item">
         <span class="participant-name">${name}</span>
-        <span class="participant-bingo">${bl > 0 ? bl + '줄 🎉' : '-'}</span>
+        ${bingoTag}
       </div>`;
   }).join('');
+
+  // 빙고 달성 현황도 동시에 갱신
+  renderBingoAchievers();
 }
+
+/* 새로고침 버튼 */
+window.refreshParticipants = function () { renderParticipants(); };
 
 /* ── Firebase 리스너 ── */
 // 호출된 단어
@@ -353,33 +414,6 @@ onSnapshot(collection(db, "boards"), snap => {
   boardsData = {};
   snap.forEach(d => { boardsData[d.id] = d.data().board || []; });
   renderParticipants();
-});
-
-// 우승자 현황
-onSnapshot(query(collection(db, "winners"), orderBy("createdAt")), snap => {
-  document.getElementById("winnerCount").textContent = snap.size;
-  const wl = document.getElementById("winnerList");
-  if (!snap.size) {
-    wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
-    return;
-  }
-  let rank = 1;
-  wl.innerHTML = '';
-  snap.forEach(d => {
-    const data = d.data();
-    const rankClass = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
-    const time = data.createdAt
-      ? new Date(data.createdAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
-      : '';
-    wl.innerHTML += `
-      <div class="winner-item">
-        <div class="winner-rank ${rankClass}">${rank}</div>
-        <div class="winner-name">${data.username}</div>
-        <div class="winner-lines">🎉 ${data.bingoLines || '?'}줄</div>
-        <div class="winner-time">${time}</div>
-      </div>`;
-    rank++;
-  });
 });
 
 /* ── 전체 초기화 ── */
