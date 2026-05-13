@@ -562,18 +562,18 @@ async function checkBingo() {
   badge.textContent = count + " 빙고";
   badge.className = "bingo-badge" + (count >= 3 ? " on" : "");
 
-  // [중요 수정] 3줄 이상이면 무조건 DB에 기록하여 관리자 리스트에 즉시 반영
+  // [핵심 수정] 3줄 이상이면 무조건 DB에 기록 (관리자 화면 노출용)
   if (submitted && gameStarted && count >= 3) {
     const username = document.getElementById("username").value.trim();
 
-    // 1. Firebase DB 기록 (유저명을 ID로 사용하여 즉시 업데이트)
+    // 1. Firebase DB 기록 (유저명을 ID로 사용하여 즉시 업데이트/복구)
     await setDoc(doc(db, "winners", username), {
       username: username,
       bingoLines: count,
       createdAt: Date.now()
     }, { merge: true });
 
-    // 2. 팝업 알림: 줄 수가 실제로 늘어났을 때만 (최초 포함) 띄움
+    // 2. 팝업 알림: 줄 수가 실제로 늘어났을 때만 (최초 달성 포함) 딱 한 번 띄움
     if (count > prevBingo) {
       document.getElementById("bingoMsg").innerHTML =
         `<strong>${username || "참가자"}</strong>님<br>${count}줄 빙고 완성! 🎊<br><br>관리자에게 확인 받으세요!`;
