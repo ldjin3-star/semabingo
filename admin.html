@@ -96,7 +96,7 @@ let gameStarted = false;
 let boardsData = {};
 let participantsList = [];
 
-// 단어 그리드 생성
+/* ── 단어 그리드 생성 ── */
 const wordGrid = document.getElementById("wordGrid");
 words.forEach(word => {
   const btn = document.createElement("button");
@@ -160,7 +160,7 @@ function updateAdminDisplay() {
   }).join('');
 }
 
-// 실시간 리스너들
+/* ── 실시간 리스너 ── */
 onSnapshot(doc(db, "game", "calledWords"), snap => {
   calledWords = snap.exists() ? (snap.data().words || []) : [];
   document.getElementById("calledCount").textContent = calledWords.length;
@@ -184,26 +184,36 @@ onSnapshot(collection(db, "boards"), snap => {
   updateAdminDisplay();
 });
 
-// 우승자 명단 리스너 (중복 제거 및 통합 버전)
+/* ── [핵심] 빙고 달성 현황 실시간 리스트 ── */
 onSnapshot(query(collection(db, "winners"), orderBy("createdAt", "asc")), snap => {
   const wl = document.getElementById("winnerList");
   const winnerCountEl = document.getElementById("winnerCount");
-  wl.innerHTML = '';
+  
+  let html = '';
   let validCount = 0;
   let rank = 1;
 
   snap.forEach(d => {
     const data = d.data();
+    // 현재 참가자 명단에 있는 사람만 리스트에 추가
     if (participantsList.includes(data.username)) {
       validCount++;
       const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-n';
       const time = data.createdAt ? new Date(data.createdAt).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
-      wl.innerHTML += `<div class="winner-item"><div class="winner-rank ${rankClass}">${rank}</div><div style="flex:1; font-weight:700;">${data.username}</div><div style="color:#d97706; font-size:13px; font-weight:700;">🎉 ${data.bingoLines}줄</div><div style="font-size:11px; color:#9ca3af; margin-left:8px;">${time}</div></div>`;
+      
+      html += `
+        <div class="winner-item">
+          <div class="winner-rank ${rankClass}">${rank}</div>
+          <div style="flex:1; font-weight:700;">${data.username}</div>
+          <div style="color:#d97706; font-size:13px; font-weight:700;">🎉 ${data.bingoLines}줄</div>
+          <div style="font-size:11px; color:#9ca3af; margin-left:8px;">${time}</div>
+        </div>`;
       rank++;
     }
   });
+
+  wl.innerHTML = html || '<div class="empty-state">아직 달성자가 없습니다</div>';
   winnerCountEl.textContent = validCount;
-  if (validCount === 0) wl.innerHTML = '<div class="empty-state">아직 달성자가 없습니다</div>';
 });
 
 window.resetSubmission = async function(username) {
@@ -215,9 +225,9 @@ window.resetSubmission = async function(username) {
 window.resetAll = async function () {
   if (!confirm("모든 데이터를 초기화하시겠습니까?")) return;
   const cols = ["participants", "boards", "winners"];
-  for (const c of cols) { 
-    const ds = await getDocs(collection(db, c)); 
-    ds.forEach(async d => await deleteDoc(d.ref)); 
+  for (const c of cols) {
+    const ds = await getDocs(collection(db, c));
+    for (const d of ds.docs) await deleteDoc(d.ref);
   }
   await deleteDoc(doc(db, "game", "calledWords"));
   await deleteDoc(doc(db, "game", "status"));
