@@ -3,65 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SEMA 빙고 관리자 (최종 수정본)</title>
+<title>SEMA 빙고 관리자</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: Pretendard, sans-serif; }
 body { background: #f3f4f6; color: #111827; }
-header { background: #c62828; color: white; padding: 16px; text-align: center; font-size: 22px; font-weight: bold; position: sticky; top: 0; z-index: 100; }
-.container { max-width: 900px; margin: auto; padding: 14px; }
-.dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 14px; }
-.stat-card { background: white; border-radius: 14px; padding: 16px; text-align: center; border: 1px solid #e5e7eb; }
-.stat-card .label { font-size: 12px; color: #6b7280; }
-.stat-card .num { font-size: 32px; font-weight: 900; color: #0f4c81; }
-.card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 14px; border: 1px solid #e5e7eb; }
-.card h3 { font-size: 13px; font-weight: 700; color: #6b7280; margin-bottom: 14px; }
-.btn { width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; }
-.btn-start { background: #16a34a; color: white; }
-.btn-reset { background: #111827; color: white; margin-top: 8px; }
-.words { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-.word-btn { width: 100%; min-height: 52px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 12px; cursor: pointer; background: #f3f4f6; }
-.word-btn.called { background: #dc2626 !important; color: white !important; }
-.winner-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; margin-bottom: 8px; background: #fef3c7; border: 1px solid #fde68a; animation: slideIn 0.3s ease-out; }
-@keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-.rank-badge { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; background: #fbbf24; color: white; }
-.participant-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
-.btn-del { padding: 4px 8px; font-size: 11px; background: #fee2e2; color: #dc2626; border-radius: 6px; cursor: pointer; border: none; }
+header { background: #c62828; color: white; padding: 16px; text-align: center; font-size: 20px; font-weight: bold; position: sticky; top: 0; z-index: 100; }
+.container { max-width: 800px; margin: auto; padding: 15px; }
+.card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.card h3 { font-size: 14px; color: #6b7280; margin-bottom: 15px; border-left: 4px solid #c62828; padding-left: 10px; }
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+.stat-box { background: white; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #e5e7eb; }
+.stat-box div { font-size: 12px; color: #6b7280; }
+.stat-box span { font-size: 24px; font-weight: 900; color: #c62828; }
+.btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; }
+.btn-start { background: #16a34a; color: white; margin-bottom: 10px; }
+.btn-reset { background: #374151; color: white; margin-top: 20px; }
+.word-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.word-btn { aspect-ratio: 1.5; font-size: 11px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; cursor: pointer; font-weight: 600; }
+.word-btn.called { background: #dc2626 !important; color: white !important; border-color: #dc2626 !important; }
+/* 우승자 리스트 스타일 */
+.winner-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 12px; background: #fffbeb; border: 1px solid #fef3c7; margin-bottom: 10px; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.rank-circle { width: 30px; height: 30px; border-radius: 50%; background: #fbbf24; color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; }
+.winner-info { flex: 1; }
+.winner-name { font-size: 16px; font-weight: 800; color: #111827; }
+.winner-time { font-size: 11px; color: #9ca3af; }
+.winner-lines { font-weight: 800; color: #d97706; font-size: 14px; }
 </style>
 </head>
 <body>
+
 <header>👑 SEMA 빙고 관리자</header>
+
 <div class="container">
-  <div class="dashboard">
-    <div class="stat-card"><div class="label">👥 참가자</div><div class="num" id="participantCount">0</div></div>
-    <div class="stat-card"><div class="label">📢 호출 단어</div><div class="num" id="calledCount" style="color:#dc2626;">0</div></div>
-    <div class="stat-card"><div class="label">🏆 3줄 달성자</div><div class="num" id="winnerCount" style="color:#16a34a;">0</div></div>
-  </div>
-
-  <div class="card" id="startSection">
-    <button class="btn btn-start" id="startBtn">🚀 대회 시작하기</button>
+  <div class="stat-grid">
+    <div class="stat-box"><div>참가자</div><span id="pCount">0</span></div>
+    <div class="stat-box"><div>호출단어</div><span id="cCount">0</span></div>
+    <div class="stat-box"><div>우승자</div><span id="wCount">0</span></div>
   </div>
 
   <div class="card">
-    <h3>📢 단어 호출</h3>
-    <div id="wordGrid" class="words"></div>
+    <button class="btn btn-start" id="startBtn">대회 시작하기</button>
+    <div class="word-grid" id="wordGrid"></div>
   </div>
 
   <div class="card">
-    <h3>🏆 빙고 달성 현황 (실시간 감지)</h3>
-    <div id="winnerList"></div>
+    <h3>🏆 빙고 달성 현황 (순서대로)</h3>
+    <div id="winnerList">
+      <div style="text-align:center; padding:30px; color:#9ca3af;">달성자가 나타나기를 기다리는 중...</div>
+    </div>
   </div>
 
-  <div class="card">
-    <h3>👥 전체 참가자 명단</h3>
-    <div id="participantList"></div>
-  </div>
-
-  <button class="btn btn-reset" id="resetBtn">🗑️ 전체 데이터 초기화</button>
+  <button class="btn btn-reset" id="resetBtn">모든 데이터 초기화</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = { apiKey: "AIzaSyAiwMpzyovfkh46P658mAF9As4oPpOXAhQ", authDomain: "sema-bingo.firebaseapp.com", projectId: "sema-bingo", storageBucket: "sema-bingo.firebasestorage.app", messagingSenderId: "836857439540", appId: "1:836857439540:web:c48adfcf50a54f00093161" };
 const app = initializeApp(firebaseConfig);
@@ -71,108 +69,88 @@ const words = ["과학기술인연금","적립형공제","목돈급여","과학�
 
 let calledWords = [];
 let gameStarted = false;
-let boards = {};
-let participants = [];
 
-// UI 그리기
-function updateUI() {
-  const wList = document.getElementById("winnerList");
-  const pList = document.getElementById("participantList");
-  let wHtml = '';
-  let pHtml = '';
-  let wCount = 0;
-
-  // 모든 참가자 대상 계산
-  participants.forEach(name => {
-    const board = boards[name];
-    const lines = calculateLines(board);
-    
-    if (lines >= 3) {
-      wCount++;
-      wHtml += `<div class="winner-item"><div class="rank-badge">${wCount}</div><div style="flex:1;font-weight:700;">${name}</div><div style="color:#d97706;">🎊 ${lines}줄 빙고!</div></div>`;
-    }
-    
-    pHtml += `<div class="participant-item"><div><strong>${name}</strong> <span style="font-size:12px;color:#d97706;">(${lines}줄)</span></div><button class="btn-del" onclick="delPart('${name}')">취소</button></div>`;
-  });
-
-  wList.innerHTML = wHtml || '<div style="text-align:center;padding:20px;color:#9ca3af;">3줄 달성자가 아직 없습니다</div>';
-  pList.innerHTML = pHtml || '<div style="text-align:center;padding:20px;color:#9ca3af;">참가자가 없습니다</div>';
-  document.getElementById("winnerCount").textContent = wCount;
-  document.getElementById("participantCount").textContent = participants.length;
-}
-
-function calculateLines(board) {
-  if (!board) return 0;
-  const lines = [];
-  for(let r=0;r<5;r++){let row=[];for(let c=0;c<5;c++)row.push(r*5+c);lines.push(row);}
-  for(let c=0;c<5;c++){let col=[];for(let r=0;r<5;r++)col.push(r*5+c);lines.push(col);}
-  lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
-  return lines.filter(line => line.every(i => board[i] && calledWords.includes(board[i]))).length;
-}
-
-// 리스너
-onSnapshot(doc(db, "game", "calledWords"), snap => {
-  calledWords = snap.exists() ? snap.data().words : [];
-  document.getElementById("calledCount").textContent = calledWords.length;
-  renderWordGrid();
-  updateUI();
+// 단어 그리드 생성
+const grid = document.getElementById("wordGrid");
+words.forEach(w => {
+  const btn = document.createElement("button");
+  btn.className = "word-btn";
+  btn.textContent = w;
+  btn.onclick = async () => {
+    if(!gameStarted) return;
+    let newWords = calledWords.includes(w) ? calledWords.filter(v => v !== w) : [...calledWords, w];
+    await setDoc(doc(db, "game", "calledWords"), { words: newWords });
+  };
+  grid.appendChild(btn);
 });
 
-onSnapshot(collection(db, "participants"), snap => {
-  participants = snap.docs.map(d => d.id);
-  updateUI();
-});
-
-onSnapshot(collection(db, "boards"), snap => {
-  snap.forEach(d => { boards[d.id] = d.data().board; });
-  updateUI();
-});
-
-onSnapshot(doc(db, "game", "status"), snap => {
-  gameStarted = snap.exists() ? snap.data().started : false;
-  const btn = document.getElementById("startBtn");
-  btn.textContent = gameStarted ? "✅ 대회 진행 중" : "🚀 대회 시작하기";
-  btn.style.opacity = gameStarted ? "0.6" : "1";
-});
-
-function renderWordGrid() {
-  const grid = document.getElementById("wordGrid");
-  grid.innerHTML = '';
-  words.forEach(w => {
-    const btn = document.createElement("button");
-    btn.className = "word-btn" + (calledWords.includes(w) ? " called" : "");
-    btn.textContent = w;
-    btn.onclick = async () => {
-      if (!gameStarted) return;
-      let newWords = calledWords.includes(w) ? calledWords.filter(v => v !== w) : [...calledWords, w];
-      await setDoc(doc(db, "game", "calledWords"), { words: newWords });
-    };
-    grid.appendChild(btn);
-  });
-}
-
-window.delPart = async (name) => {
-  if(confirm("취소하시겠습니까?")) {
-    await deleteDoc(doc(db, "participants", name));
-    await deleteDoc(doc(db, "winners", name)).catch(()=>{});
-  }
-};
-
+// 대회 시작
 document.getElementById("startBtn").onclick = async () => {
+  if(!confirm("대회를 시작하시겠습니까?")) return;
   await setDoc(doc(db, "game", "status"), { started: true });
 };
 
+// 데이터 초기화
 document.getElementById("resetBtn").onclick = async () => {
-  if(!confirm("모든 데이터를 초기화하시겠습니까?")) return;
+  if(!confirm("주의! 모든 데이터가 삭제됩니다. 초기화할까요?")) return;
   const cols = ["participants", "boards", "winners"];
   for (const c of cols) {
-    const ds = await getDocs(collection(db, c));
-    for (const d of ds.docs) await deleteDoc(d.ref);
+    const snap = await getDocs(collection(db, c));
+    snap.forEach(async (d) => await deleteDoc(d.ref));
   }
   await setDoc(doc(db, "game", "calledWords"), { words: [] });
   await setDoc(doc(db, "game", "status"), { started: false });
   alert("초기화 완료");
+  location.reload();
 };
+
+/* ── 핵심 리스너: 실시간 우승자 리스트 ── */
+onSnapshot(query(collection(db, "winners"), orderBy("createdAt", "asc")), (snap) => {
+  const listEl = document.getElementById("winnerList");
+  const countEl = document.getElementById("wCount");
+  
+  if (snap.empty) {
+    listEl.innerHTML = '<div style="text-align:center; padding:30px; color:#9ca3af;">달성자가 나타나기를 기다리는 중...</div>';
+    countEl.textContent = "0";
+    return;
+  }
+
+  let html = "";
+  let rank = 1;
+  snap.forEach((doc) => {
+    const data = doc.data();
+    const time = data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : "";
+    html += `
+      <div class="winner-item">
+        <div class="rank-circle">${rank}</div>
+        <div class="winner-info">
+          <div class="winner-name">${data.username}</div>
+          <div class="winner-time">${time}</div>
+        </div>
+        <div class="winner-lines">${data.bingoLines}줄 빙고!</div>
+      </div>
+    `;
+    rank++;
+  });
+  listEl.innerHTML = html; // 전체를 새로 그려서 누락 방지
+  countEl.textContent = snap.size;
+});
+
+// 기타 리스너
+onSnapshot(doc(db, "game", "calledWords"), s => {
+  calledWords = s.exists() ? s.data().words : [];
+  document.getElementById("cCount").textContent = calledWords.length;
+  document.querySelectorAll(".word-btn").forEach(b => {
+    b.classList.toggle("called", calledWords.includes(b.textContent));
+  });
+});
+onSnapshot(doc(db, "game", "status"), s => {
+  gameStarted = s.exists() ? s.data().started : false;
+  document.getElementById("startBtn").textContent = gameStarted ? "대회 진행 중..." : "대회 시작하기";
+  document.getElementById("startBtn").style.opacity = gameStarted ? "0.6" : "1";
+});
+onSnapshot(collection(db, "participants"), s => document.getElementById("pCount").textContent = s.size);
+
 </script>
 </body>
 </html>
