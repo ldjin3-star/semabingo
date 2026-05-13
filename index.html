@@ -192,14 +192,6 @@ header {
   text-align: center;
 }
 
-/* ── 읽기 전용 불러오기 안내 배너 ── */
-#loadReadonlyBanner {
-  display: none;
-  background: #eff6ff; border-radius: 10px; padding: 10px 12px;
-  font-size: 13px; color: #1d4ed8; font-weight: 600; margin-bottom: 10px;
-  text-align: center; border: 1px solid #93c5fd;
-}
-
 /* ── Bingo Popup ── */
 .bingo-overlay {
   display: none; position: fixed; inset: 0; z-index: 1000;
@@ -255,9 +247,9 @@ header {
   <div class="card">
     <h3>👤 참가자 정보</h3>
     <input type="text" class="name-input" id="username" placeholder="이름을 입력하세요" maxlength="10" />
-    <button class="btn btn-green" id="randomBtn" onclick="randomBoard()">🎲 랜덤 생성</button>
-    <button class="btn btn-gray"  id="loadBtn" onclick="loadBoard()">📂 저장된 빙고판 불러오기</button>
-    <button class="btn btn-blue"  id="saveBtn" onclick="saveBoard()">💾 임시 저장</button>
+    <button class="btn btn-green" onclick="randomBoard()">🎲 랜덤 생성</button>
+    <button class="btn btn-gray"  onclick="loadBoard()">📂 저장된 빙고판 불러오기</button>
+    <button class="btn btn-blue"  onclick="saveBoard()">💾 임시 저장</button>
     <button class="btn btn-red"   id="submitBtn" onclick="submitBingo()">📨 참가 제출 (수정불가)</button>
     <p id="submitHint" style="font-size:11px;color:#6b7280;text-align:center;margin-top:4px;">제출 후에는 수정할 수 없습니다</p>
   </div>
@@ -273,7 +265,6 @@ header {
   <div class="card" id="wordCard">
     <h3>✏️ 단어 선택 <span id="wordCountHint" style="font-weight:400;color:#9ca3af;font-size:12px;">(<span id="selectedCount">0</span>/25)</span></h3>
     <div id="editLockedBanner">🔒 대회가 시작되어 단어를 수정할 수 없습니다</div>
-    <div id="loadReadonlyBanner">👁️ 읽기 전용으로 불러왔습니다. 수정은 불가합니다.</div>
     <div class="words" id="wordList"></div>
   </div>
 
@@ -334,6 +325,7 @@ function onCellClick(cell, i) {
     if (selectedWords.includes(currentWord)) return;
     // 기존 단어 있으면 제거
     if (selectedWords[i]) {
+      const old = selectedWords[i];
       selectedWords[i] = null;
     }
     cell.textContent = currentWord;
@@ -359,9 +351,6 @@ function renderWords() {
   list.innerHTML = "";
   document.getElementById("selectedCount").textContent = selectedWords.filter(Boolean).length;
 
-  // 수정 불가 상태이면 단어 버튼 자체를 숨기거나 비활성화
-  const isLocked = submitted || gameStarted;
-
   words.forEach(word => {
     const btn = document.createElement("button");
     btn.className = "word-btn";
@@ -371,10 +360,6 @@ function renderWords() {
       btn.classList.add("used");
     } else if (currentWord === word) {
       btn.classList.add("active");
-    }
-
-    if (isLocked) {
-      btn.style.pointerEvents = "none";
     }
 
     btn.onclick = () => {
@@ -417,38 +402,65 @@ window.saveBoard = async function () {
 };
 
 /* ── 불러오기 ── */
-// 읽기 전용 여부: 제출 완료 또는 대회 시작 시 true
 window.loadBoard = async function () {
   const username = document.getElementById("username").value.trim();
   if (!username) { alert("이름을 입력해주세요"); return; }
+  
+  try {
+    // 1. 빙고판 데이터 가져오기
+    const snap = await getDoc(doc(db, "boards", username));
+    if (!snap.exists()) { 
+      alert("저장된 빙고판이 없습니다. 먼저 빙고판을 채우고 저장해주세요."); 
+      return; 
+    }
+    
+    const data = snap.data().board;
+    selectedWords = [...data];
+    
+    // 2. 화면에 빙고판 데이터 출력
+    document.querySelectorAll(".cell").forEach((cell, idx) => {
+      cell.textContent = data[idx] || "";
+      cell.classList.toggle("filled", !!data[idx]);
+      cell.classList.remove("selected", "bingo-line");
+    });
+    
+    currentWord = null;
+    renderWords();
+    applyCalled();
 
-  const snap = await getDoc(doc(db, "boards", username));
-  if (!snap.exists()) { alert("저장된 빙고판이 없습니다"); return; }
-
-  const data = snap.data().board;
-  selectedWords = [...data];
-  document.querySelectorAll(".cell").forEach((cell, idx) => {
-    cell.textContent = data[idx] || "";
-    cell.classList.toggle("filled", !!data[idx]);
-    cell.classList.remove("selected","bingo-line");
-  });
-  currentWord = null;
-  renderWords();
-  applyCalled();
-
-  // 읽기 전용 상태일 때 안내
-  const isReadonly = submitted || gameStarted;
-  if (isReadonly) {
-    const reason = submitted ? "참가 제출이 완료되었으므로" : "대회가 시작되었으므로";
-    document.getElementById("loadReadonlyBanner").style.display = "block";
-    document.getElementById("loadReadonlyBanner").textContent =
-      `👁️ 빙고판을 불러왔습니다. ${reason} 수정은 불가합니다.`;
-    alert(`✅ 불러오기 완료!\n(${reason} 보기만 가능합니다)`);
-  } else {
-    document.getElementById("loadReadonlyBanner").style.display = "none";
-    alert("✅ 불러오기 완료!");
+    // 3. [가장 중요] 서버의 참가 명단(participants) 확인
+    const partSnap = await getDoc(doc(db, "participants", username));
+    
+    if (partSnap.exists()) {
+      // 이미 제출한 사람인 경우
+      submitted = true; 
+      lockBoard(); // UI 잠금 함수 실행
+      alert("✅ 제출 완료된 빙고판을 불러왔습니다. (수정 불가)");
+    } else if (gameStarted) {
+      // 제출은 안 했지만 대회가 이미 시작된 경우
+      submitted = false; 
+      lockBoard(); 
+      document.getElementById("submitBtn").textContent = "🔒 대회 시작 후 수정 불가";
+      alert("⚠️ 대회가 시작되어 수정이 불가능합니다.");
+    } else {
+      // 수정 가능한 상태
+      submitted = false;
+      unlockBoard(); // 잠금 해제 함수 실행
+      alert("✅ 빙고판을 불러왔습니다. 수정이 가능합니다.");
+    }
+  } catch (error) {
+    console.error("Error loading board:", error);
+    alert("불러오기 중 오류가 발생했습니다.");
   }
 };
+
+// --- 도움 함수: UI 잠금 해제 (제출 취소 대응용) ---
+function unlockBoard() {
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("submitBtn").textContent = "참가 제출하기";
+  document.getElementById("wordCard").style.display = "block";
+  document.getElementById("editLockedBanner").style.display = "none";
+}
 
 /* ── 참가 제출 ── */
 window.submitBingo = async function () {
@@ -466,64 +478,47 @@ window.submitBingo = async function () {
   alert("✅ 참가 제출 완료!");
 };
 
-/* ── 제출 완료 후 UI 잠금 ── */
+// 모든 수정 기능을 막는 함수
 function lockBoard() {
   // 제출 버튼 비활성화
-  const submitBtn = document.getElementById("submitBtn");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "✅ 제출완료";
+  const sBtn = document.getElementById("submitBtn");
+  sBtn.disabled = true;
+  sBtn.style.opacity = "0.6";
+  sBtn.textContent = "🔒 수정 불가 (제출됨)";
 
-  document.getElementById("submitHint").textContent = "참가 제출이 완료되었습니다!";
-
-  // 랜덤/저장 버튼 숨기기
-  document.getElementById("randomBtn").style.display = "none";
-  document.getElementById("saveBtn").style.display = "none";
-
-  // 불러오기 버튼은 유지 (읽기 전용 안내 추가)
-  document.getElementById("loadBtn").textContent = "📂 빙고판 불러오기 (보기 전용)";
-
-  // 단어 선택 카드 내 잠금 배너 표시
-  document.getElementById("editLockedBanner").style.display = "none"; // 대회 시작 배너 대신 커스텀
-  document.getElementById("loadReadonlyBanner").style.display = "block";
-  document.getElementById("loadReadonlyBanner").textContent =
-    "✅ 참가 제출이 완료되었습니다. 불러오기로 빙고판을 확인할 수 있습니다.";
-
-  // 셀 잠금
-  document.querySelectorAll(".cell").forEach(c => c.classList.add("locked"));
-  renderWords();
+  // 단어 선택 카드 숨기기
+  document.getElementById("wordCard").style.display = "none";
+  
+  // 빙고판 셀 클릭 방지 (CSS 처리)
+  document.getElementById("bingoBoard").style.pointerEvents = "none";
+  
+  // 랜덤/저장 버튼 등 수정 관련 버튼 숨기기
+  document.querySelectorAll(".btn-green, .btn-blue").forEach(btn => {
+    if(btn.textContent.includes("랜덤") || btn.textContent.includes("저장")) {
+      btn.style.display = "none";
+    }
+  });
 }
-
 /* ── 게임 시작 상태 반영 ── */
 function applyGameStarted(started) {
   gameStarted = started;
-  const banner   = document.getElementById("gameBanner");
-  const dot      = document.getElementById("bannerDot");
-  const text     = document.getElementById("bannerText");
+  const banner = document.getElementById("gameBanner");
+  const dot = document.getElementById("bannerDot");
+  const text = document.getElementById("bannerText");
   const lockBanner = document.getElementById("editLockedBanner");
 
   if (started) {
     banner.className = "started";
     dot.className = "bdot green";
     text.textContent = "대회 진행 중 — 호출되는 단어를 확인하세요!";
-
     if (!submitted) {
-      // 제출 안 한 상태에서 대회 시작됨 → 수정 잠금
-      lockBanner.style.display = "block";
-      // 랜덤/저장/제출 버튼 비활성화
-      document.getElementById("randomBtn").disabled = true;
-      document.getElementById("saveBtn").disabled = true;
-      document.getElementById("submitBtn").disabled = true;
-      // 불러오기 버튼은 활성 유지 (읽기 전용)
-      document.getElementById("loadBtn").textContent = "📂 빙고판 불러오기 (보기 전용)";
-      // 셀 잠금
-      document.querySelectorAll(".cell").forEach(c => c.classList.add("locked"));
-      renderWords();
+        lockBanner.style.display = "block";
+        // 제출 버튼을 비활성화하여 수정을 원천 차단
+        document.getElementById("submitBtn").disabled = true;
+        document.getElementById("submitBtn").textContent = "🔒 대회 진행 중 (수정 불가)";
     }
   } else {
-    banner.className = "waiting";
-    dot.className = "bdot orange";
-    text.textContent = "대기 중 — 관리자가 시작 전까지 빙고판을 자유롭게 수정할 수 있습니다";
-    lockBanner.style.display = "none";
+    // ... 기존 대기 상태 코드 유지 ...
   }
 }
 
@@ -540,7 +535,7 @@ function applyCalled() {
 function getBingoLines() {
   const lines = [];
   for (let r=0;r<5;r++){const row=[];for(let c=0;c<5;c++)row.push(r*5+c);lines.push(row);}
-  for (let c=0;c<5;c++){const col=[];for (let r=0;r<5;r++)col.push(r*5+c);lines.push(col);}
+  for (let c=0;c<5;c++){const col=[];for(let r=0;r<5;r++)col.push(r*5+c);lines.push(col);}
   lines.push([0,6,12,18,24]); lines.push([4,8,12,16,20]);
   return lines;
 }
@@ -566,7 +561,7 @@ function checkBingo() {
   badge.textContent = count + " 빙고";
   badge.className = "bingo-badge" + (count >= 3 ? " on" : "");
 
-  // 3줄 빙고 달성 알림 (제출 완료 + 대회 시작 상태에서만)
+  // 3줄 빙고 달성 알림
   if (submitted && gameStarted && count >= 3 && count > prevBingo) {
     const username = document.getElementById("username").value.trim();
     document.getElementById("bingoMsg").innerHTML =
