@@ -540,6 +540,7 @@ function getBingoLines() {
   return lines;
 }
 
+/* === 여기서부터 끝까지 복사해서 덮어넣으세요 === */
 async function checkBingo() {
   const cells = document.querySelectorAll(".cell");
   // 빙고 라인 하이라이트 초기화
@@ -561,19 +562,23 @@ async function checkBingo() {
   badge.textContent = count + " 빙고";
   badge.className = "bingo-badge" + (count >= 3 ? " on" : "");
 
-  // 3줄 빙고 달성 알림
-  if (submitted && gameStarted && count >= 3 && count > prevBingo) {
+  // [중요 수정] 3줄 이상이면 무조건 DB에 기록하여 관리자 리스트에 즉시 반영
+  if (submitted && gameStarted && count >= 3) {
     const username = document.getElementById("username").value.trim();
-    document.getElementById("bingoMsg").innerHTML =
-      `<strong>${username || "참가자"}</strong>님<br>${count}줄 빙고 완성! 🎊<br><br>관리자에게 확인 받으세요!`;
-    document.getElementById("bingoOverlay").classList.add("show");
 
-// 중복 생성 없이 유저명을 문서 ID로 사용하여 기록을 갱신(덮어쓰기)함
-await setDoc(doc(db, "winners", username), {
-  username,
-  bingoLines: count,
-  createdAt: Date.now()
-}, { merge: true });
+    // 1. Firebase DB 기록 (유저명을 ID로 사용하여 즉시 업데이트)
+    await setDoc(doc(db, "winners", username), {
+      username: username,
+      bingoLines: count,
+      createdAt: Date.now()
+    }, { merge: true });
+
+    // 2. 팝업 알림: 줄 수가 실제로 늘어났을 때만 (최초 포함) 띄움
+    if (count > prevBingo) {
+      document.getElementById("bingoMsg").innerHTML =
+        `<strong>${username || "참가자"}</strong>님<br>${count}줄 빙고 완성! 🎊<br><br>관리자에게 확인 받으세요!`;
+      document.getElementById("bingoOverlay").classList.add("show");
+    }
   }
   prevBingo = count;
 }
