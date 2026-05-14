@@ -151,23 +151,23 @@ header {
 }
 @keyframes badgePulse { from{box-shadow:none;} to{box-shadow:0 0 12px rgba(251,191,36,.5);} }
 
-/* ── Word List: 4열 × 10행 ── */
+/* ── Word List: 5열 × 9행 ── */
 .words {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
 }
 .word-btn {
   width: 100%;
-  min-height: 56px;
+  min-height: 52px;
   display: flex; align-items: center; justify-content: center;
-  text-align: center; line-height: 1.35;
+  text-align: center; line-height: 1.3;
   word-break: keep-all; overflow-wrap: break-word; overflow: hidden;
   background: #f3f4f6;
   border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 8px 6px;
-  font-size: clamp(11px, 2.8vw, 13px);
+  border-radius: 8px;
+  padding: 6px 3px;
+  font-size: clamp(10px, 2.5vw, 12px);
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
@@ -297,9 +297,9 @@ const words = [
   "과학기술인공제회","대덕복지센터","세마인베스트먼트","사이언스빌리지","세마파트너스",
   "15만명","18조8천억원","8,442억원","5.10%","회원만족",
   "한국과학기술정보연구원","한국전자통신연구원","국방과학연구소","한국수력원자력","과학기술정보통신부",
-  "출연연","기업부설연구소","엔지니어링사업자","기술사","비영리법인",
   "주식","채권","부동산","인프라","기업",
-  "폴바셋","샐러디","후토루","부타이","능라도"
+  "폴바셋","샐러디","후토루","부타이","능라도",
+  "출연연","기업부설연구소","엔지니어링사업자","기술사","비영리법인"
 ];
 
 // 표시용: 자연스러운 어절 경계에 zero-width space 삽입 (저장값은 words 원본 그대로)
