@@ -129,6 +129,15 @@ header {
 .participant-name { font-weight: 600; }
 .participant-bingo { font-size: 12px; font-weight: 700; color: #d97706; }
 
+/* ── 제출 취소 버튼 ── */
+.btn-reset-sub {
+  font-size: 11px; padding: 4px 10px; border-radius: 8px;
+  border: 1px solid #fca5a5; background: #fff; color: #dc2626;
+  cursor: pointer; font-weight: 600; transition: all .15s;
+  white-space: nowrap;
+}
+.btn-reset-sub:hover { background: #fee2e2; }
+
 .empty-state { text-align: center; padding: 24px; color: #9ca3af; font-size: 14px; }
 .empty-state .ei { font-size: 32px; display: block; margin-bottom: 8px; }
 
@@ -174,7 +183,7 @@ header {
 
   <!-- 빙고 달성 현황 -->
   <div class="card">
-    <h3>🏆 빙고 달성 현황</h3>
+    <h3>🏆 빙고 달성 현황 <span style="font-weight:400;color:#9ca3af;font-size:11px;text-transform:none;letter-spacing:0;">(3줄 달성 순서)</span></h3>
     <div id="winnerList"><div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div></div>
   </div>
 
@@ -182,7 +191,7 @@ header {
   <div class="card">
     <h3 style="display:flex;justify-content:space-between;align-items:center;">
       <span>👥 참가자 현황</span>
-      <button class="btn btn-outline" onclick="" style="width:auto;padding:5px 12px;font-size:12px;margin:0;">🔄 새로고침</button>
+      <button class="btn btn-outline" onclick="renderParticipants()" style="width:auto;padding:5px 12px;font-size:12px;margin:0;">🔄 새로고침</button>
     </h3>
     <div id="participantList"><div class="empty-state"><span class="ei">👤</span>참가자가 없습니다</div></div>
   </div>
@@ -224,9 +233,10 @@ const words = [
   "폴바셋","샐러디","후토루","부타이","능라도"
 ];
 
-let calledWords = [];
-let gameStarted = false;
-let boardsData  = {};  // {username: [25개 단어]}
+let calledWords    = [];
+let gameStarted    = false;
+let boardsData     = {};   // { username: [25개 단어] }
+let participantsList = []; // 제출된 참가자 목록
 
 /* ── 단어 버튼 생성 ── */
 const wordGrid = document.getElementById("wordGrid");
@@ -300,37 +310,40 @@ function countBingo(board) {
   return getBingoLines().filter(line => line.every(i => board[i] && calledWords.includes(board[i]))).length;
 }
 
-/* ── 참가자 목록 갱신 ── */
-function updateAdminDisplay() {
+/* ── 참가자 현황 렌더 ── */
+window.renderParticipants = function () {
   const pl = document.getElementById("participantList");
-  
-  // 핵심: 제출자 명단(participantsList)에 포함된 사람만 필터링
-  const activeEntries = Object.entries(boardsData).filter(([name]) => 
+
+  // 제출자 명단에 포함된 사람만 필터링
+  const activeEntries = Object.entries(boardsData).filter(([name]) =>
     participantsList.includes(name)
   );
 
+  document.getElementById("boardCount").textContent = activeEntries.length;
+
   if (activeEntries.length === 0) {
-    pl.innerHTML = '<div class="empty-state">👤 제출된 빙고판이 없습니다</div>';
+    pl.innerHTML = '<div class="empty-state"><span class="ei">👤</span>제출된 빙고판이 없습니다</div>';
     return;
   }
 
   pl.innerHTML = activeEntries.map(([name, board]) => {
     const bl = countBingo(board);
-    const isWinner = bl >= 3; // 3줄 이상 강조
+    const isWinner = bl >= 3;
     return `
-      <div class="participant-item" style="${isWinner ? 'background: #fffbeb; border-left: 4px solid #fbbf24;' : ''}">
-        <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
+      <div class="participant-item" style="${isWinner ? 'background:#fffbeb;border-left:4px solid #fbbf24;padding-left:10px;' : ''}">
+        <div style="flex:1;display:flex;align-items:center;justify-content:space-between;">
           <div>
             <span class="participant-name">${isWinner ? '👑 ' : ''}${name}</span>
-            <span class="participant-bingo">${bl > 0 ? bl + '줄' : '-'}</span>
+            <span class="participant-bingo" style="margin-left:8px;">${bl > 0 ? bl + '줄' : '-'}</span>
           </div>
           <button class="btn-reset-sub" onclick="resetSubmission('${name}')">제출 취소</button>
         </div>
       </div>`;
   }).join('');
-}
+};
 
 /* ── Firebase 리스너 ── */
+
 // 호출된 단어
 onSnapshot(doc(db, "game", "calledWords"), snap => {
   calledWords = snap.exists() ? (snap.data().words || []) : [];
@@ -340,13 +353,12 @@ onSnapshot(doc(db, "game", "calledWords"), snap => {
     btn.classList.toggle("called", calledWords.includes(btn.textContent));
   });
 
-  // 호출 목록 칩
   const cl = document.getElementById("calledList");
   cl.innerHTML = calledWords.length
     ? calledWords.map(w => `<span class="called-chip">${w}</span>`).join('')
     : '<span style="font-size:12px;color:#9ca3af;">아직 없습니다</span>';
 
-  updateAdminDisplay();
+  renderParticipants();
 });
 
 // 게임 상태
@@ -354,56 +366,69 @@ onSnapshot(doc(db, "game", "status"), snap => {
   applyGameStatus(snap.exists() ? (snap.data().started || false) : false);
 });
 
-// 참가자 수
+// 참가자 명단 (participants 컬렉션)
 onSnapshot(collection(db, "participants"), snap => {
+  participantsList = snap.docs.map(d => d.id);
   document.getElementById("participantCount").textContent = snap.size;
+  renderParticipants();
+  // winner 목록도 갱신 (참가자 변경 시 현황판 재계산 필요)
+  renderWinners();
 });
 
-let participantsList = []; // 제출자 명단 저장 변수 추가
-
-// 1. 제출자 명단(participants) 감시 (추가)
-onSnapshot(collection(db, "participants"), (snap) => {
-  participantsList = snap.docs.map(doc => doc.id); 
-  document.getElementById("participantCount").textContent = snap.size;
-  updateAdminDisplay(); 
-});
-
-// 2. 빙고판 데이터 감시 (기존 코드 수정)
-onSnapshot(collection(db, "boards"), (snap) => {
+// 빙고판 데이터
+onSnapshot(collection(db, "boards"), snap => {
   boardsData = {};
-  snap.forEach(doc => { boardsData[doc.id] = doc.data().board; });
-  updateAdminDisplay(); 
+  snap.forEach(d => { boardsData[d.id] = d.data().board; });
+  renderParticipants();
 });
 
-// 우승자 현황
-onSnapshot(query(collection(db, "winners"), orderBy("createdAt")), snap => {
-  document.getElementById("winnerCount").textContent = snap.size;
+/* ── 빙고 달성 현황판 렌더 ── */
+// 별도 변수로 winners 스냅샷을 캐싱해두고 참가자 목록 변경 시에도 재렌더 가능하게 함
+let cachedWinnersSnap = null;
+
+function renderWinners() {
+  if (!cachedWinnersSnap) return;
+  const snap = cachedWinnersSnap;
   const wl = document.getElementById("winnerList");
-  if (!snap.size) {
+
+  // 현재 참가자 목록에 있는 사람 중 3줄 이상 달성자만, createdAt 순으로 정렬
+  const winners = snap.docs
+    .map(d => d.data())
+    .filter(data =>
+      data.username &&
+      participantsList.includes(data.username) &&
+      (data.bingoLines || 0) >= 3
+    )
+    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+  document.getElementById("winnerCount").textContent = winners.length;
+
+  if (winners.length === 0) {
     wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
     return;
   }
-  let rank = 1;
-  wl.innerHTML = '';
-snap.forEach(d => {
 
-  const data = d.data();
-
-  // 현재 참가자 목록에 없는 사람은 제외
-  if (!participantsList.includes(data.username)) return;
+  wl.innerHTML = winners.map((data, idx) => {
+    const rank = idx + 1;
     const rankClass = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
     const time = data.createdAt
       ? new Date(data.createdAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
       : '';
-    wl.innerHTML += `
+    return `
       <div class="winner-item">
         <div class="winner-rank ${rankClass}">${rank}</div>
         <div class="winner-name">${data.username}</div>
-        <div class="winner-lines">🎉 ${data.bingoLines || '?'}줄</div>
+        <div class="winner-lines">🎉 빙고 달성!</div>
         <div class="winner-time">${time}</div>
       </div>`;
-    rank++;
-  });
+  }).join('');
+}
+
+// ★ 핵심: winners 컬렉션을 createdAt 기준으로 정렬해서 실시간 감시
+// index.html에서 username을 doc ID로 저장하므로 중복 없음
+onSnapshot(query(collection(db, "winners"), orderBy("createdAt")), snap => {
+  cachedWinnersSnap = snap;
+  renderWinners();
 });
 
 /* ── 전체 초기화 ── */
@@ -423,23 +448,13 @@ window.resetAll = async function () {
 
 /* ── 제출 취소 ── */
 window.resetSubmission = async function(username) {
-
-  if (!confirm(`"${username}" 참가자의 제출을 취소하시겠습니까?\n참가자는 다시 수정 및 제출할 수 있게 됩니다.`)) {
-    return;
-  }
+  if (!confirm(`"${username}" 참가자의 제출을 취소하시겠습니까?\n참가자는 다시 수정 및 제출할 수 있게 됩니다.`)) return;
 
   try {
-
-    // 참가 제출 명단에서 제거
     await deleteDoc(doc(db, "participants", username));
-
-    // 우승 기록도 제거
-    try {
-      await deleteDoc(doc(db, "winners", username));
-    } catch(e) {}
-
+    // winners에서도 제거 (username이 doc ID)
+    try { await deleteDoc(doc(db, "winners", username)); } catch(e){}
     alert(`✅ ${username}님의 제출이 취소되었습니다.`);
-
   } catch (e) {
     console.error(e);
     alert("제출 취소 중 오류가 발생했습니다.");
