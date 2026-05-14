@@ -108,11 +108,13 @@ header {
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
   text-align: center;
-  font-size: clamp(8px, 2.3vw, 11px);
+  font-size: clamp(11px, 3vw, 14px);
   font-weight: 600;
   padding: 3px;
   line-height: 1.25;
   word-break: keep-all;
+  overflow-wrap: break-word;
+  overflow: hidden;
   cursor: pointer;
   transition: all .18s;
   -webkit-tap-highlight-color: transparent;
@@ -299,6 +301,36 @@ const words = [
   "폴바셋","샐러디","후토루","부타이","능라도"
 ];
 
+// 표시용: 자연스러운 어절 경계에 zero-width space 삽입 (저장값은 words 원본 그대로)
+const Z = '\u200B';
+const displayWords = {
+  "과학기술인연금":      `과학기술인${Z}연금`,
+  "적립형공제":          `적립형${Z}공제`,
+  "목돈급여":            `목돈${Z}급여`,
+  "과학기술인으뜸적금":  `과학기술인${Z}으뜸적금`,
+  "복지서비스":          `복지${Z}서비스`,
+  "든든한파트너":        `든든한${Z}파트너`,
+  "가치공유":            `가치${Z}공유`,
+  "자산관리":            `자산${Z}관리`,
+  "책임성":              `책임성`,
+  "과학기술투자":        `과학기술${Z}투자`,
+  "복지사각해소":        `복지사각${Z}해소`,
+  "회원복지강화":        `회원복지${Z}강화`,
+  "리스크관리":          `리스크${Z}관리`,
+  "신뢰성효율성":        `신뢰성${Z}효율성`,
+  "과학기술인공제회":    `과학기술인${Z}공제회`,
+  "대덕복지센터":        `대덕${Z}복지센터`,
+  "세마인베스트먼트":    `세마${Z}인베스트먼트`,
+  "사이언스빌리지":      `사이언스${Z}빌리지`,
+  "세마파트너스":        `세마${Z}파트너스`,
+  "18조8천억원":         `18조${Z}8천억원`,
+  "한국과학기술정보연구원": `한국${Z}과학기술${Z}정보연구원`,
+  "한국전자통신연구원":  `한국${Z}전자통신${Z}연구원`,
+  "국방과학연구소":      `국방${Z}과학연구소`,
+  "한국수력원자력":      `한국${Z}수력원자력`,
+  "과학기술정보통신부":  `과학기술${Z}정보통신부`,
+};
+
 /* ── 상태 ── */
 let currentWord   = null;
 let selectedWords = [];
@@ -324,7 +356,7 @@ function onCellClick(cell, i) {
   if (currentWord) {
     if (selectedWords.includes(currentWord)) return;
     selectedWords[i] = currentWord;
-    cell.textContent = currentWord;
+    cell.innerHTML = displayWords[currentWord] || currentWord;
     cell.classList.add("filled");
     cell.classList.remove("selected");
     currentWord = null;
@@ -347,7 +379,7 @@ function renderWords() {
   words.forEach(word => {
     const btn = document.createElement("button");
     btn.className = "word-btn";
-    btn.textContent = word;
+    btn.innerHTML = displayWords[word] || word;
 
     if (selectedWords.includes(word)) {
       btn.classList.add("used");
@@ -373,7 +405,7 @@ window.randomBoard = function () {
   const shuffled = [...words].sort(() => Math.random() - .5).slice(0, 25);
   selectedWords = shuffled;
   document.querySelectorAll(".cell").forEach((cell, idx) => {
-    cell.textContent = shuffled[idx];
+    cell.innerHTML = displayWords[shuffled[idx]] || shuffled[idx];
     cell.classList.add("filled");
     cell.classList.remove("selected","bingo-line");
   });
@@ -388,7 +420,7 @@ window.saveBoard = async function () {
   if (gameStarted) { alert("대회가 시작되어 수정할 수 없습니다"); return; }
   const username = document.getElementById("username").value.trim();
   if (!username) { alert("이름을 입력해주세요"); return; }
-  const board25 = [...document.querySelectorAll(".cell")].map(c => c.textContent);
+  const board25 = [...document.querySelectorAll(".cell")].map(c => c.textContent.replace(/\u200B/g, ''));
   if (board25.filter(Boolean).length < 25) { alert("25칸을 모두 채워주세요"); return; }
   await setDoc(doc(db, "boards", username), { username, board: board25 });
   alert("💾 저장되었습니다!");
@@ -410,7 +442,7 @@ window.loadBoard = async function () {
     selectedWords = [...data];
 
     document.querySelectorAll(".cell").forEach((cell, idx) => {
-      cell.textContent = data[idx] || "";
+      cell.innerHTML = data[idx] ? (displayWords[data[idx]] || data[idx]) : "";
       cell.classList.toggle("filled", !!data[idx]);
       cell.classList.remove("selected", "bingo-line");
     });
@@ -452,7 +484,7 @@ function unlockBoard() {
 window.submitBingo = async function () {
   const username = document.getElementById("username").value.trim();
   if (!username) { alert("이름을 입력해주세요"); return; }
-  const board25 = [...document.querySelectorAll(".cell")].map(c => c.textContent);
+  const board25 = [...document.querySelectorAll(".cell")].map(c => c.textContent.replace(/\u200B/g, ''));
   if (board25.filter(Boolean).length < 25) { alert("25칸을 모두 채워주세요"); return; }
   if (!confirm(`"${username}" 이름으로 제출하시겠습니까?\n제출 후에는 수정이 불가합니다.`)) return;
 
@@ -507,7 +539,7 @@ function applyGameStarted(started) {
 /* ── 호출된 단어 적용 ── */
 function applyCalled() {
   document.querySelectorAll(".cell").forEach(cell => {
-    const w = cell.textContent;
+    const w = cell.textContent.replace(/\u200B/g, '');
     cell.classList.toggle("selected", !!(w && calledWords.includes(w)));
   });
   checkBingo();
@@ -529,7 +561,7 @@ async function checkBingo() {
   let count = 0;
   getBingoLines().forEach(line => {
     const allCalled = line.every(i => {
-      const w = cells[i].textContent;
+      const w = cells[i].textContent.replace(/\u200B/g, '');
       return w && calledWords.includes(w);
     });
     if (allCalled) {
