@@ -19,7 +19,6 @@ header {
 
 .container { max-width: 900px; margin: auto; padding: 14px; }
 
-/* ── Dashboard ── */
 .dashboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -34,16 +33,13 @@ header {
 .stat-card .num { font-size: 32px; font-weight: 900; margin-top: 6px; color: #0f4c81; }
 .stat-card .num.red   { color: #dc2626; }
 .stat-card .num.green { color: #16a34a; }
-.stat-card .num.gold  { color: #d97706; }
 
-/* ── Card ── */
 .card {
   background: white; border-radius: 16px; padding: 16px; margin-bottom: 14px;
   box-shadow: 0 1px 4px rgba(0,0,0,.07); border: 1px solid #e5e7eb;
 }
 .card h3 { font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
 
-/* ── Buttons ── */
 .btn {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   cursor: pointer; font-weight: 700; font-size: 16px; margin-bottom: 8px;
@@ -51,15 +47,14 @@ header {
 }
 .btn:last-child { margin-bottom: 0; }
 .btn:active { transform: scale(.97); }
-.btn-start { background: #16a34a; color: white; }
+.btn-start   { background: #16a34a; color: white; }
 .btn-start:hover { background: #15803d; }
 .btn-started { background: #dcfce7; color: #16a34a; border: 2px solid #86efac; cursor: default; }
-.btn-reset { background: #111827; color: white; }
+.btn-reset   { background: #111827; color: white; }
 .btn-reset:hover { background: #000; }
 .btn-outline { background: white; color: #374151; border: 1.5px solid #e5e7eb; }
 .btn-outline:hover { background: #f9fafb; }
 
-/* ── Game start section ── */
 .start-section {
   background: #eff6ff; border: 2px solid #93c5fd;
   border-radius: 14px; padding: 18px; margin-bottom: 14px; text-align: center;
@@ -69,7 +64,6 @@ header {
 .start-section.done { background: #dcfce7; border-color: #86efac; }
 .start-section.done h3 { color: #16a34a; }
 
-/* ── Word grid ── */
 .words {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -88,10 +82,7 @@ header {
 .word-btn:active { transform: scale(.96); }
 .word-btn.called { background: #dc2626; color: white; border-color: #dc2626; }
 
-/* ── Called list ── */
-.called-list {
-  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
-}
+.called-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .called-chip {
   background: #fee2e2; border: 1px solid #fca5a5;
   border-radius: 14px; padding: 4px 12px; font-size: 13px; color: #dc2626; font-weight: 600;
@@ -102,7 +93,6 @@ header {
 }
 @keyframes popIn { from{transform:scale(.7);opacity:0;} to{transform:scale(1);opacity:1;} }
 
-/* ── Winners ── */
 .winner-item {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 14px; border-radius: 12px; margin-bottom: 8px;
@@ -116,25 +106,22 @@ header {
   font-size: 13px; font-weight: 900; flex-shrink: 0;
 }
 .rank-1{background:#fbbf24;color:#fff;} .rank-2{background:#9ca3af;color:#fff;} .rank-3{background:#d97706;color:#fff;} .rank-n{background:#e5e7eb;color:#6b7280;}
-.winner-name { flex: 1; font-weight: 700; font-size: 15px; }
+.winner-name  { flex: 1; font-weight: 700; font-size: 15px; }
 .winner-lines { font-size: 13px; font-weight: 700; color: #d97706; }
 .winner-time  { font-size: 11px; color: #9ca3af; }
 
-/* ── Participant list ── */
 .participant-item {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px;
 }
 .participant-item:last-child { border-bottom: none; }
-.participant-name { font-weight: 600; }
+.participant-name  { font-weight: 600; }
 .participant-bingo { font-size: 12px; font-weight: 700; color: #d97706; }
 
-/* ── 제출 취소 버튼 ── */
 .btn-reset-sub {
   font-size: 11px; padding: 4px 10px; border-radius: 8px;
   border: 1px solid #fca5a5; background: #fff; color: #dc2626;
-  cursor: pointer; font-weight: 600; transition: all .15s;
-  white-space: nowrap;
+  cursor: pointer; font-weight: 600; transition: all .15s; white-space: nowrap;
 }
 .btn-reset-sub:hover { background: #fee2e2; }
 
@@ -151,7 +138,6 @@ header {
 
 <div class="container">
 
-  <!-- Stats -->
   <div class="dashboard">
     <div class="stat-card"><div class="label">👥 참가자 수</div><div class="num" id="participantCount">0</div></div>
     <div class="stat-card"><div class="label">💾 제출된 빙고판</div><div class="num" id="boardCount">0</div></div>
@@ -159,7 +145,6 @@ header {
     <div class="stat-card"><div class="label">🏆 빙고 달성자</div><div class="num green" id="winnerCount">0</div></div>
   </div>
 
-  <!-- 게임 시작 -->
   <div class="start-section" id="startSection">
     <h3 id="startTitle">⏳ 대회 시작 전</h3>
     <p id="startDesc">참가자들이 빙고판을 작성 중입니다.<br>준비가 완료되면 아래 버튼을 눌러 대회를 시작하세요.<br><strong>시작 후에는 참가자가 빙고판을 수정할 수 없습니다.</strong></p>
@@ -168,7 +153,6 @@ header {
     </button>
   </div>
 
-  <!-- 단어 호출 -->
   <div class="card">
     <h3>📢 단어 호출</h3>
     <div id="callDisabled" style="background:#fef3c7;border-radius:10px;padding:10px;font-size:13px;color:#d97706;font-weight:600;margin-bottom:12px;">
@@ -181,22 +165,19 @@ header {
     </div>
   </div>
 
-  <!-- 빙고 달성 현황 -->
   <div class="card">
     <h3>🏆 빙고 달성 현황 <span style="font-weight:400;color:#9ca3af;font-size:11px;text-transform:none;letter-spacing:0;">(3줄 달성 순서)</span></h3>
     <div id="winnerList"><div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div></div>
   </div>
 
-  <!-- 참가자 현황 -->
   <div class="card">
     <h3 style="display:flex;justify-content:space-between;align-items:center;">
       <span>👥 참가자 현황</span>
-      <button class="btn btn-outline" onclick="renderParticipants()" style="width:auto;padding:5px 12px;font-size:12px;margin:0;">🔄 새로고침</button>
+      <button class="btn btn-outline" onclick="updateAll()" style="width:auto;padding:5px 12px;font-size:12px;margin:0;">🔄 새로고침</button>
     </h3>
     <div id="participantList"><div class="empty-state"><span class="ei">👤</span>참가자가 없습니다</div></div>
   </div>
 
-  <!-- 대회 관리 -->
   <div class="card" style="border-color:#fca5a5;">
     <h3 style="color:#dc2626;">⚠️ 대회 관리</h3>
     <button id="resetBtn" class="btn btn-reset" onclick="resetAll()">🗑️ 전체 초기화</button>
@@ -208,7 +189,7 @@ header {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore, doc, setDoc, getDoc, onSnapshot,
-  collection, query, orderBy, getDocs, deleteDoc
+  collection, getDocs, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -233,10 +214,14 @@ const words = [
   "폴바셋","샐러디","후토루","부타이","능라도"
 ];
 
-let calledWords    = [];
-let gameStarted    = false;
-let boardsData     = {};   // { username: [25개 단어] }
-let participantsList = []; // 제출된 참가자 목록
+let calledWords      = [];
+let gameStarted      = false;
+let boardsData       = {};  // { username: [25개 단어] }
+let participantsList = [];  // 제출된 참가자 명단
+
+// ★ admin이 직접 추적하는 3줄 달성 시각 { username: timestamp }
+// winners 컬렉션과 무관하게 동작 — 누락 없음
+let achievedAt = {};
 
 /* ── 단어 버튼 생성 ── */
 const wordGrid = document.getElementById("wordGrid");
@@ -265,7 +250,7 @@ window.startGame = async function () {
 /* ── 게임 상태 반영 ── */
 function applyGameStatus(started) {
   gameStarted = started;
-  const ss   = document.getElementById("startSection");
+  const ss    = document.getElementById("startSection");
   const title = document.getElementById("startTitle");
   const desc  = document.getElementById("startDesc");
   const btn   = document.getElementById("startBtn");
@@ -307,34 +292,72 @@ function getBingoLines() {
 }
 function countBingo(board) {
   if (!board || board.length < 25) return 0;
-  return getBingoLines().filter(line => line.every(i => board[i] && calledWords.includes(board[i]))).length;
+  return getBingoLines().filter(line =>
+    line.every(i => board[i] && calledWords.includes(board[i]))
+  ).length;
 }
 
-/* ── 참가자 현황 렌더 ── */
-window.renderParticipants = function () {
+/* ── 전체 갱신 (달성현황 + 참가자현황) ── */
+window.updateAll = function () {
+  // 제출자 중 빙고판 있는 사람 계산
+  const entries = participantsList
+    .filter(name => boardsData[name])
+    .map(name => ({ name, bingo: countBingo(boardsData[name]) }));
+
+  // ★ 3줄 최초 달성 시각 기록 (한 번 기록되면 덮어쓰지 않음)
+  entries.forEach(({ name, bingo }) => {
+    if (bingo >= 3 && !achievedAt[name]) {
+      achievedAt[name] = Date.now();
+    }
+  });
+  // 제출 취소된 사람 정리
+  Object.keys(achievedAt).forEach(name => {
+    if (!participantsList.includes(name)) delete achievedAt[name];
+  });
+
+  // ── 빙고 달성 현황판 ──
+  const winners = entries
+    .filter(e => e.bingo >= 3)
+    .sort((a, b) => (achievedAt[a.name] || 0) - (achievedAt[b.name] || 0));
+
+  document.getElementById("winnerCount").textContent = winners.length;
+  const wl = document.getElementById("winnerList");
+
+  if (winners.length === 0) {
+    wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
+  } else {
+    wl.innerHTML = winners.map(({ name }, idx) => {
+      const rank = idx + 1;
+      const rc = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
+      const t  = achievedAt[name];
+      const time = t ? new Date(t).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
+      return `
+        <div class="winner-item">
+          <div class="winner-rank ${rc}">${rank}</div>
+          <div class="winner-name">${name}</div>
+          <div class="winner-lines">🎉 빙고 달성!</div>
+          <div class="winner-time">${time}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── 참가자 현황 ──
+  document.getElementById("boardCount").textContent = entries.length;
   const pl = document.getElementById("participantList");
 
-  // 제출자 명단에 포함된 사람만 필터링
-  const activeEntries = Object.entries(boardsData).filter(([name]) =>
-    participantsList.includes(name)
-  );
-
-  document.getElementById("boardCount").textContent = activeEntries.length;
-
-  if (activeEntries.length === 0) {
+  if (entries.length === 0) {
     pl.innerHTML = '<div class="empty-state"><span class="ei">👤</span>제출된 빙고판이 없습니다</div>';
     return;
   }
 
-  pl.innerHTML = activeEntries.map(([name, board]) => {
-    const bl = countBingo(board);
-    const isWinner = bl >= 3;
+  pl.innerHTML = entries.map(({ name, bingo }) => {
+    const isW = bingo >= 3;
     return `
-      <div class="participant-item" style="${isWinner ? 'background:#fffbeb;border-left:4px solid #fbbf24;padding-left:10px;' : ''}">
+      <div class="participant-item" style="${isW ? 'background:#fffbeb;border-left:4px solid #fbbf24;padding-left:10px;' : ''}">
         <div style="flex:1;display:flex;align-items:center;justify-content:space-between;">
           <div>
-            <span class="participant-name">${isWinner ? '👑 ' : ''}${name}</span>
-            <span class="participant-bingo" style="margin-left:8px;">${bl > 0 ? bl + '줄' : '-'}</span>
+            <span class="participant-name">${isW ? '👑 ' : ''}${name}</span>
+            <span class="participant-bingo" style="margin-left:8px;">${bingo > 0 ? bingo+'줄' : '-'}</span>
           </div>
           <button class="btn-reset-sub" onclick="resetSubmission('${name}')">제출 취소</button>
         </div>
@@ -358,7 +381,7 @@ onSnapshot(doc(db, "game", "calledWords"), snap => {
     ? calledWords.map(w => `<span class="called-chip">${w}</span>`).join('')
     : '<span style="font-size:12px;color:#9ca3af;">아직 없습니다</span>';
 
-  renderParticipants();
+  updateAll();
 });
 
 // 게임 상태
@@ -366,83 +389,33 @@ onSnapshot(doc(db, "game", "status"), snap => {
   applyGameStatus(snap.exists() ? (snap.data().started || false) : false);
 });
 
-// 참가자 명단 (participants 컬렉션)
+// 참가자 명단
 onSnapshot(collection(db, "participants"), snap => {
   participantsList = snap.docs.map(d => d.id);
   document.getElementById("participantCount").textContent = snap.size;
-  renderParticipants();
-  // winner 목록도 갱신 (참가자 변경 시 현황판 재계산 필요)
-  renderWinners();
+  updateAll();
 });
 
 // 빙고판 데이터
 onSnapshot(collection(db, "boards"), snap => {
   boardsData = {};
   snap.forEach(d => { boardsData[d.id] = d.data().board; });
-  renderParticipants();
-});
-
-/* ── 빙고 달성 현황판 렌더 ── */
-// 별도 변수로 winners 스냅샷을 캐싱해두고 참가자 목록 변경 시에도 재렌더 가능하게 함
-let cachedWinnersSnap = null;
-
-function renderWinners() {
-  if (!cachedWinnersSnap) return;
-  const snap = cachedWinnersSnap;
-  const wl = document.getElementById("winnerList");
-
-  // 현재 참가자 목록에 있는 사람 중 3줄 이상 달성자만, createdAt 순으로 정렬
-  const winners = snap.docs
-    .map(d => d.data())
-    .filter(data =>
-      data.username &&
-      participantsList.includes(data.username) &&
-      (data.bingoLines || 0) >= 3
-    )
-    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-
-  document.getElementById("winnerCount").textContent = winners.length;
-
-  if (winners.length === 0) {
-    wl.innerHTML = '<div class="empty-state"><span class="ei">🎯</span>아직 빙고 달성자가 없습니다</div>';
-    return;
-  }
-
-  wl.innerHTML = winners.map((data, idx) => {
-    const rank = idx + 1;
-    const rankClass = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
-    const time = data.createdAt
-      ? new Date(data.createdAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
-      : '';
-    return `
-      <div class="winner-item">
-        <div class="winner-rank ${rankClass}">${rank}</div>
-        <div class="winner-name">${data.username}</div>
-        <div class="winner-lines">🎉 빙고 달성!</div>
-        <div class="winner-time">${time}</div>
-      </div>`;
-  }).join('');
-}
-
-// ★ 핵심: winners 컬렉션을 createdAt 기준으로 정렬해서 실시간 감시
-// index.html에서 username을 doc ID로 저장하므로 중복 없음
-onSnapshot(query(collection(db, "winners"), orderBy("createdAt")), snap => {
-  cachedWinnersSnap = snap;
-  renderWinners();
+  updateAll();
 });
 
 /* ── 전체 초기화 ── */
 window.resetAll = async function () {
   if (!confirm("⚠️ 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) return;
 
-  const collections = ["participants", "boards", "winners"];
-  for (const col of collections) {
+  const cols = ["participants", "boards", "winners"];
+  for (const col of cols) {
     const docs = await getDocs(collection(db, col));
     for (const item of docs.docs) await deleteDoc(item.ref);
   }
   try { await deleteDoc(doc(db, "game", "calledWords")); } catch(e){}
   try { await deleteDoc(doc(db, "game", "status"));      } catch(e){}
 
+  achievedAt = {};
   alert("✅ 초기화 완료");
 };
 
@@ -452,10 +425,10 @@ window.resetSubmission = async function(username) {
 
   try {
     await deleteDoc(doc(db, "participants", username));
-    // winners에서도 제거 (username이 doc ID)
     try { await deleteDoc(doc(db, "winners", username)); } catch(e){}
+    delete achievedAt[username];
     alert(`✅ ${username}님의 제출이 취소되었습니다.`);
-  } catch (e) {
+  } catch(e) {
     console.error(e);
     alert("제출 취소 중 오류가 발생했습니다.");
   }
