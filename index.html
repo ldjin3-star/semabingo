@@ -159,12 +159,13 @@ header {
   width: 100%;
   min-height: 44px;
   display: flex; align-items: center; justify-content: center;
-  text-align: center; line-height: 1.25; word-break: keep-all;
+  text-align: center; line-height: 1.25;
+  word-break: break-all; overflow-wrap: break-word; overflow: hidden;
   background: #f3f4f6;
   border: 2px solid #e5e7eb;
   border-radius: 10px;
   padding: 6px 4px;
-  font-size: 11px;
+  font-size: clamp(9px, 2.2vw, 11px);
   font-weight: 600;
   cursor: pointer;
   transition: all .15s;
